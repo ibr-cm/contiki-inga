@@ -56,6 +56,12 @@
 #include "net/uDTN/bundle.h"
 #include "net/uDTN/sdnv.h"
 
+#ifdef CONF_BUNDLES
+#define BUNDLES CONF_BUNDLES
+#else
+#define BUNDLES 1000
+#endif
+
 /*---------------------------------------------------------------------------*/
 PROCESS(udtn_sink_process, "uDTN Sink process");
 AUTOSTART_PROCESSES(&udtn_sink_process);
@@ -71,8 +77,6 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 	static uint8_t userdata[2];
 	uint32_t tmp;
 	static uint32_t seqno;
-	clock_time_t now;
-	unsigned short now_fine;
 	struct mmem * bundle_incoming;
 	static struct mmem * bundle_outgoing;
 
@@ -106,7 +110,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 
 		/* Check for timeout */
 		if (etimer_expired(&timer)) {
-			if (clock_seconds()-(time_start/CLOCK_SECOND) > 900) {
+			if (clock_seconds()-(time_start/CLOCK_SECOND) > 18000) {
 				profiling_stop();
 				watchdog_stop();
 				profiling_report("timeout", 0);
@@ -167,27 +171,18 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 
 		/* Start counting time after the first bundle arrived */
 		if (bundles_recv == 1) {
-			do {
-				now_fine = clock_time();
-				now = clock_seconds();
-			} while (now_fine != clock_time());
-			time_start = ((unsigned long)now)*CLOCK_SECOND + now_fine%CLOCK_SECOND;
+			time_start = test_precise_timestamp(NULL);
 		}
 
 		if (bundles_recv%50 == 0)
 			printf("%u\n", bundles_recv);
 
-		/* Report profiling data after receiving 1000 bundles
+		/* Report profiling data after receiving BUNDLES bundles
 		   Ideally seq. no 0-999 */
-		if (bundles_recv==1000) {
+		if (bundles_recv==BUNDLES) {
 			leds_off(1);
 			profiling_stop();
-
-			do {
-				now_fine = clock_time();
-				now = clock_seconds();
-			} while (now_fine != clock_time());
-			time_stop = ((unsigned long)now)*CLOCK_SECOND + now_fine%CLOCK_SECOND;
+			time_stop = test_precise_timestamp(NULL);
 
 			bundle_outgoing = bundle_create_bundle();
 
@@ -225,14 +220,14 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			process_post(&agent_process, dtn_application_status_event, &reg);
 
 			watchdog_stop();
-			profiling_report("recv-1000", 0);
-			TEST_REPORT("throughput", 1000L*CLOCK_SECOND, time_stop-time_start, "bundles/s");
+			profiling_report("recv-bundles", 0);
+			TEST_REPORT("throughput", BUNDLES*CLOCK_SECOND, time_stop-time_start, "bundles/s");
 			TEST_REPORT("errors", bundles_error, 1, "erronous bundles");
 
 			/* Packet loss in percent
 			   We received 1000 bundles, if seqno is 999 bundleloss is 0%
 			   If seqno is 1999 bundleloss is 50% (1000 received, 1000 lost) */
-			TEST_REPORT("packetloss", (seqno-999)*100, seqno+1, "\%");
+			TEST_REPORT("packetloss", (seqno-(BUNDLES-1))*100, seqno+1, "\%");
 			TEST_PASS();
 			watchdog_start();
 			PROCESS_EXIT();
