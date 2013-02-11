@@ -79,7 +79,7 @@ struct storage_driver {
 	void (* reinit)(void);
 	/** saves a bundle */
 	uint8_t (* save_bundle)(struct mmem *bundlemem, uint32_t ** bundle_number);
-	/** deletes a bundle */
+	/** deletes a bundle */ //FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden?
 	uint16_t (* del_bundle)(uint32_t bundle_num, uint8_t reason);
 	/** reads a bundle */
 	struct mmem *(* read_bundle)(uint32_t bundle_num);
@@ -87,8 +87,10 @@ struct storage_driver {
 	uint16_t (* free_space)(struct mmem *bundlemem);
 	/** returns the number of saved bundles */
 	uint16_t (* get_bundle_num)(void);
-	/** returns pointer to list of bundles */
+	/** returns pointer to list of bundles */ //FIXME Rückgabewert, evtl. Parameter
 	struct storage_entry_t * (* get_bundles)(void);
+	//FIXME
+	//irgendwas, dass die Garbage Collection veranlasst
 };
 extern const struct storage_driver BUNDLE_STORAGE;
 #endif

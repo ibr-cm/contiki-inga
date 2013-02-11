@@ -241,6 +241,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 	/* Put in the prefix */
 	buffer[0]  = 0;
 	buffer[0] |= CONVERGENCE_LAYER_TYPE_DATA & CONVERGENCE_LAYER_MASK_TYPE;
+	/* FIXME Macros durch Variablen ersetzen */
 	buffer[0] |= (CONVERGENCE_LAYER_FLAGS_FIRST | CONVERGENCE_LAYER_FLAGS_LAST) & CONVERGENCE_LAYER_MASK_FLAGS;
 	buffer[0] |= (outgoing_sequence_number << 2) & CONVERGENCE_LAYER_MASK_SEQNO;
 	ticket->sequence_number = outgoing_sequence_number;
@@ -408,6 +409,7 @@ int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, ui
 	struct bundle_t * bundle = NULL;
 	int n;
 
+	/* FIXME Nur unsegmentierte Bündel erlaubt */
 	if( flags != (CONVERGENCE_LAYER_FLAGS_FIRST | CONVERGENCE_LAYER_FLAGS_LAST ) ) {
 		LOG(LOGD_DTN, LOG_CL, LOGL_ERR, "Bundle received %p from %u.%u with invalid flags %02X", payload, source->u8[0], source->u8[1], flags);
 	}
