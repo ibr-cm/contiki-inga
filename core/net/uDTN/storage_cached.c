@@ -30,6 +30,17 @@
 #include "hash.h"
 
 #include "storage.h"
+#include "cache.h"
+
+//FIXME dummy index block
+static uint32_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_SIZE] = { 0 };
+static uint8_t temp_index_array_toggle = 0;
+
+//      * index_newest_block
+//      storage_cached_get_index_block()
+static uint8_t last_index_entry = BUNDLE_STORAGE_INDEX_ARRAY_SIZE+1;
+/** Last written block with index data, initialized with invalid value */
+static uint8_t last_index_block_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
 
 /**
  * Internal representation of a bundle
@@ -86,6 +97,8 @@ void storage_cached_init(void)
 	//FIXME mal sehn
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "storage_cached init");
 
+	//FIXME Cacheblock für Index reservieren
+
 	// Initialize the bundle list
 	list_init(bundle_list);
 
@@ -101,11 +114,53 @@ void storage_cached_init(void)
 }
 
 /**
+ * \brief adds index entry
+ */
+uint8_t storage_cached_add_index_entry(uint32_t ID, uint32_t TargetNode){
+	uint8_t i;
+	for(i=last_index_entry+1; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+		if(i>BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS){
+			i=0;
+		}
+		if(temp_index_array[i*2] == 0 && temp_index_array[i*2+1] == 0){
+			temp_index_array[i*2] = ID;
+			temp_index_array[i*2+1] = TargetNode;
+			last_index_entry = i;
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/**
+ * \brief finds index entry for ID, overwrites it with last_index_entry
+ */
+uint8_t storage_cached_del_index_entry(uint32_t ID){
+    for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+        if(temp_index_array[i*2] == ID){
+            temp_index_array[i*2] = temp_index_array[last_index_entry*2];
+            temp_index_array[i*2+1] = temp_index_array[last_index_entry*2+1];
+            temp_index_array[last_index_entry*2] = 0;
+            temp_index_array[last_index_entry*2+1] = 0;
+            --last_index_entry;
+            return 0;
+        }
+    }
+    return 1;
+
+}
+
+void storage_cached_build_index(){
+	//FIXME scan through bundle storage
+}
+
+/**
  * \brief deletes expired bundles from storage
  */
 void storage_cached_prune()
 {
 	//FIXME überprüft X Flashseiten auf abgelaufene Bündel
+	//FIXME option "build index"
 }
 
 /**
@@ -224,29 +279,71 @@ uint16_t storage_cached_get_bundle_numbers(void){
 
 /**
  * \brief Get the bundle list
- * \returns pointer to first bundle list entry
+ * \returns pointer to first bundle list array in cache, sets index_array_entrys
+ *
+ * mode: next, free
+ *
  */
-struct storage_entry_t * storage_cached_get_bundles(void)
-{
-	return (struct storage_entry_t *) list_head(bundle_list);
-	//FIXME Gibt Array + Arraylänge zurück
-	//      Mit ID + Zielnode
-	//      Beim 2. - n. Aufruf: Array 2 - n
-	//      Dann 1mal NULL
+uint32_t * storage_cached_get_bundles(uint8_t mode, uint8_t *index_array_entrys){
+
+    *index_array_entrys = last_index_entry; //FIXME Unterscheidung zwischen dem und BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS
+
+    //FIXME simuliert Ende der Liste
+	if(temp_index_array_toggle == 1){
+	    *index_array_entrys = 0;
+		temp_index_array_toggle = 0;
+	} else {
+		temp_index_array_toggle = 1;
+	}
+
+	if (mode == CACHE_PARTITION_RESET){
+		//FIXME frees occupied cache blocks
+		//FIXME simuliert zurücksetzten auf start
+		temp_index_array_toggle = 0;
+	}
+
+	//get "next" index block from cache
+	//struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_partition(CACHE_PARTITION_NEXT_BLOCK, CACHE_PARTITION_B_INDEX_START, last_index_block_address);
+
+//    uint8_t i;
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+//    	temp_index_array[i*2]=i+1; //FIXME ID
+//    	temp_index_array[i*2+1]=i+1;  //FIXME Zielnode
+//    }
+//
+//    //FIXME nur bei RAM-Block nötig
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+//        	if(temp_index_array[i*2] == 0 && temp_index_array[i*2+1] == 0){
+//        		*index_array_entrys = i-1;
+//        		break;
+//        	}
+//    }
+
+
+// TEST
+//	int main(void){
+//	        int *array_ptr = NULL;
+//	        int array_length = 0;
+//	        array_ptr = storage_cached_get_bundles(5, &array_length);
+//
+//	        int i;
+//	        for(i=0; i<array_length*2; ++i){
+//	                printf("Feld[%d] : %d\n",i,*(array_ptr+i));
+//	        }
+//	        return 0;
+//	}
+
+
+    return temp_index_array;
+
+	//FIXME Beim 2. - n. Aufruf: Array 2 - n
+	//      Dann 1mal länge 0
 	//      Dann wieder von vorne
 	//      Blockiert bis zum nächsten read den entsprechenden Cacheblock, d.h. Liste muss komplett durchlaufen werden
 	//      state pro aufrufer?
 	//      freigeben von liste?
 	//      Kümmert sich um das Nachladen vom Flash
-	//      int index_newest_entry
-	//      * index_newest_block
-	//      storage_cached_add_index_entry(ID, TargetNode)
-	//      storage_cached_del_index_entry(ID)
-	//      storage_cached_build_index()
-	//      storage_cached_get_index_block()
-	//
-	//      cache_get_list ( partition )
-	//
+
 }
 
 const struct storage_driver storage_cached = {

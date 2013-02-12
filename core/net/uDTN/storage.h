@@ -26,6 +26,9 @@
 
 #include "bundle.h"
 
+#define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66
+#define BUNDLE_STORAGE_INDEX_ARRAY_SIZE 132 // 2x BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS
+
 /**
  * Which storage driver are we going to use?
  * Default is RAM
