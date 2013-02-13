@@ -27,7 +27,6 @@
 #include "bundle.h"
 
 #define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66
-#define BUNDLE_STORAGE_INDEX_ARRAY_SIZE 132 // 2x BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS
 
 /**
  * Which storage driver are we going to use?
@@ -63,6 +62,7 @@
 #define BUNDLE_STORAGE_INIT 0
 #endif
 
+// FIXME: löschen
 /**
  * Representation of a bundle as returned by the "get_bundles" call to the storage module
  */
@@ -72,6 +72,17 @@ struct storage_entry_t {
 
 	/** Internal number of the bundle */
 	uint32_t bundle_num;
+};
+
+/**
+ * Representation of a bundle in the array returned by the "get_bundles" call to the storage module
+ */
+struct storage_index_entry_t {
+    /** Internal number of the bundle */
+    uint32_t bundle_num;
+    
+    /** Destination node of the bundle */
+    uint32_t dst_node;
 };
 
 /** storage module interface  */

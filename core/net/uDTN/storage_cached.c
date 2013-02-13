@@ -32,15 +32,23 @@
 #include "storage.h"
 #include "cache.h"
 
+#define STORAGE_CACHED_GET_BUNDLES_HEAD 0
+#define STORAGE_CACHED_GET_BUNDLES_NEXT 1
+#define STORAGE_CACHED_GET_BUNDLES_FREE 2
+
+static uint8_t next_mode = STORAGE_CACHED_GET_BUNDLES_HEAD; //FIXME flags zusammenlegen
+
 //FIXME dummy index block
-static uint32_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_SIZE] = { 0 };
+//FIXME besser mehr dimensionen?
+static struct storage_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 static uint8_t temp_index_array_toggle = 0;
+static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 
 //      * index_newest_block
 //      storage_cached_get_index_block()
-static uint8_t last_index_entry = BUNDLE_STORAGE_INDEX_ARRAY_SIZE+1;
-/** Last written block with index data, initialized with invalid value */
-static uint8_t last_index_block_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
+static uint8_t last_index_entry = BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS+1;
+/** Last written block with index data, initialized with invalid value */  //FIXME this replaces temp_index_array
+//static uint8_t last_index_block_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
 
 /**
  * Internal representation of a bundle
@@ -117,19 +125,20 @@ void storage_cached_init(void)
  * \brief adds index entry
  */
 uint8_t storage_cached_add_index_entry(uint32_t ID, uint32_t TargetNode){
+	//FIXME in dem Moment, in dem die gültige Adresse feststeht
 	uint8_t i;
 	for(i=last_index_entry+1; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
 		if(i>BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS){
 			i=0;
 		}
-		if(temp_index_array[i*2] == 0 && temp_index_array[i*2+1] == 0){
-			temp_index_array[i*2] = ID;
-			temp_index_array[i*2+1] = TargetNode;
+		if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
+			temp_index_array[i].bundle_num = ID;
+			temp_index_array[i].dst_node = TargetNode;
 			last_index_entry = i;
-			return 0;
+			return 1;
 		}
 	}
-	return 1;
+	return 0;
 }
 
 /**
@@ -137,16 +146,16 @@ uint8_t storage_cached_add_index_entry(uint32_t ID, uint32_t TargetNode){
  */
 uint8_t storage_cached_del_index_entry(uint32_t ID){
     for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
-        if(temp_index_array[i*2] == ID){
-            temp_index_array[i*2] = temp_index_array[last_index_entry*2];
-            temp_index_array[i*2+1] = temp_index_array[last_index_entry*2+1];
-            temp_index_array[last_index_entry*2] = 0;
-            temp_index_array[last_index_entry*2+1] = 0;
+        if(temp_index_array[i].bundle_num == ID){
+            temp_index_array[i].bundle_num = temp_index_array[last_index_entry].bundle_num;
+            temp_index_array[i].dst_node = temp_index_array[last_index_entry].dst_node;
+            temp_index_array[last_index_entry].bundle_num = 0;
+            temp_index_array[last_index_entry].dst_node = 0;
             --last_index_entry;
-            return 0;
+            return 1;
         }
     }
-    return 1;
+    return 0;
 
 }
 
@@ -206,9 +215,7 @@ uint8_t storage_cached_make_room(struct mmem * bundlemem)
  * \param bundle_number_ptr pointer where the bundle number will be stored (on success)
  * \return 0 on error, 1 on success
  */
-uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_number_ptr)
-{
-	return 1;
+uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_number_ptr){
 	//FIXME if (cache_access(Ungültiges Bundle Tag)) =! NULL
 	//        Cacheblock + Offset(s) merken
 	//        auf weitere Segmente warten
@@ -219,6 +226,94 @@ uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_n
 	//      oder
 	//        vollen Block aus Cache mit gültigem Tag versehen
 	//        cache_write_back()
+
+	struct bundle_t *bundle = NULL;
+	uint32_t bundle_number = 0;
+	uint32_t bundle_persistent_address = CACHE_PARTITION_BUNDLES_INVALID_TAG;
+
+	if( bundlemem == NULL ) {
+		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "storage_cached_save_bundle with invalid pointer %p", bundlemem);
+		return 0;
+	}
+
+	// Get the pointer to our bundle
+	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+
+	if( bundle == NULL ) {
+		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "storage_cached_save_bundle with invalid MMEM structure");
+		return 0;
+	}
+
+	// Calculate the bundle number
+	bundle_number = HASH.hash_convenience(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
+
+//FIXME Look for duplicates in the storage
+
+
+
+	if( last_index_entry == BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS ) { //FIXME kann dank segmentierung auch noch später auftreten
+		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "Cannot store bundle, no room");
+		return 0;
+	}
+
+	// Now we have to update the pointer to our bundle, because MMEM may have been modified (freed) and thus the pointer may have changed
+	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+
+	// calculate address
+	bundle_persistent_address = bundle_number % (CACHE_PARTITION_BUNDLES_END - CACHE_PARTITION_BUNDLES_START );
+	//struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_block(bundle_persistent_address);
+
+	//FIXME Check auf Kollisionen
+	uint8_t bundle_persistent_address_collision = TRUE;
+	while(bundle_persistent_address_collision == TRUE){
+	    bundle_persistent_address_collision = FALSE;
+        for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+            if(temp_index_array_collision_check[i] == bundle_persistent_address){
+                bundle_persistent_address_collision = TRUE;
+                ++bundle_persistent_address;
+                break;
+            }
+        }
+	}
+
+	uint8_t buffer[528];
+
+	uint16_t i;
+	for(i=0; i<528; ++i){
+		buffer[i]=i%255;
+	}
+
+	/* read page */
+	//at45db_read_page_bypassed( bundle_persistent_address, 0, buffer, 528 );
+
+	// save to flash
+	at45db_write_buffer( bundle_persistent_address, buffer, 528 );
+	at45db_buffer_to_page( bundle_persistent_address );
+
+	// we copy the reference to the bundle, therefore we have to increase the reference counter
+	bundle_increment(bundlemem); //FIXME
+	bundles_in_storage++;
+
+	// Set all required fields
+	bundle->bundle_num = bundle_number;
+
+	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "New Bundle %lu, Src %lu, Dest %lu, Seq %lu", bundle->bundle_num, bundle->src_node, bundle->dst_node, bundle->tstamp_seq);
+
+	// Notify the statistics module
+	storage_cached_update_statistics();
+
+	// Add index entry for bundle
+	storage_cached_add_index_entry(bundle_number, bundle->dst_node);
+
+	// Now we have to (virtually) free the incoming bundle slot
+	// This should do nothing, as we have incremented the reference counter before
+	bundle_decrement(bundlemem);  //FIXME
+
+	// Now copy over the STATIC pointer to the bundle number, so that
+	// the caller can stick it into an event
+	*bundle_number_ptr = &temp_index_array[last_index_entry].bundle_num; //FIXME ist später mehr Zufall, wenn das klappt...
+	                                                                     //FIXME Pointer auf ID in Cacheblock?
+	return 1;
 }
 
 /**
@@ -244,6 +339,7 @@ uint16_t storage_cached_delete_bundle(uint32_t bundle_number, uint8_t reason)
  */
 struct mmem *storage_cached_read_bundle(uint32_t bundle_num)
 {
+	struct bundle entry;
 	return entry->bundle;
 	//FIXME berechnet Speicheradresse (Fkt)
 	//      while (Cacheblock ID =! bundle_num)
@@ -281,10 +377,10 @@ uint16_t storage_cached_get_bundle_numbers(void){
  * \brief Get the bundle list
  * \returns pointer to first bundle list array in cache, sets index_array_entrys
  *
- * mode: next, free
+ * mode: head, next, free
  *
  */
-uint32_t * storage_cached_get_bundles(uint8_t mode, uint8_t *index_array_entrys){
+struct storage_index_entry_t * storage_cached_get_bundles(uint8_t mode, uint8_t *index_array_entrys){
 
     *index_array_entrys = last_index_entry; //FIXME Unterscheidung zwischen dem und BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS
 
@@ -296,43 +392,49 @@ uint32_t * storage_cached_get_bundles(uint8_t mode, uint8_t *index_array_entrys)
 		temp_index_array_toggle = 1;
 	}
 
-	if (mode == CACHE_PARTITION_RESET){
+	/** Check mode, allow next-/free-mode only, if head was requested before */
+	if ( mode == STORAGE_CACHED_GET_BUNDLES_HEAD && next_mode == STORAGE_CACHED_GET_BUNDLES_HEAD ){
+		next_mode = STORAGE_CACHED_GET_BUNDLES_NEXT;
+	} else if ( mode == STORAGE_CACHED_GET_BUNDLES_NEXT && next_mode == STORAGE_CACHED_GET_BUNDLES_NEXT ){
+		next_mode = mode;
+	} else if (mode == STORAGE_CACHED_GET_BUNDLES_FREE && next_mode == STORAGE_CACHED_GET_BUNDLES_NEXT ){
 		//FIXME frees occupied cache blocks
 		//FIXME simuliert zurücksetzten auf start
 		temp_index_array_toggle = 0;
+	} else {
+		//FIXME Falscher mode, abbrechen
 	}
 
 	//get "next" index block from cache
 	//struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_partition(CACHE_PARTITION_NEXT_BLOCK, CACHE_PARTITION_B_INDEX_START, last_index_block_address);
 
 //    uint8_t i;
-//    for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
-//    	temp_index_array[i*2]=i+1; //FIXME ID
-//    	temp_index_array[i*2+1]=i+1;  //FIXME Zielnode
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
+//    	temp_index_array[i].bundle_num=i+1; //FIXME ID
+//    	temp_index_array[i].dst_node=i+1;  //FIXME Zielnode
 //    }
 //
 //    //FIXME nur bei RAM-Block nötig
-//    for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
-//        	if(temp_index_array[i*2] == 0 && temp_index_array[i*2+1] == 0){
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
+//        	if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
 //        		*index_array_entrys = i-1;
 //        		break;
 //        	}
 //    }
-
-
+//
+//
 // TEST
 //	int main(void){
-//	        int *array_ptr = NULL;
+//	        struct storage_index_entry_t *array_ptr = NULL;
 //	        int array_length = 0;
-//	        array_ptr = storage_cached_get_bundles(5, &array_length);
+//	        array_ptr = storage_cached_get_bundles(STORAGE_CACHED_GET_BUNDLES_HEAD, &array_length);
 //
 //	        int i;
-//	        for(i=0; i<array_length*2; ++i){
-//	                printf("Feld[%d] : %d\n",i,*(array_ptr+i));
+//	        for(i=0; i<array_length; ++i){
+//	                printf("Bundle[%d] : [ID] %d : [Dest] %d\n",i,array_ptr[i].bundle_num,array_ptr[i].dst_node);
 //	        }
 //	        return 0;
 //	}
-
 
     return temp_index_array;
 

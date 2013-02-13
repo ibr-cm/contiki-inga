@@ -81,7 +81,7 @@ struct cache_entry_t {
 	                      // 14 Bit Tag = 16384 data blocks are addressable
 
 	/** Data Block*/
-	//DATA_BLOCK FIXME
+	uint8_t data_block[CACHE_BLOCKS_SIZE];
 };
 
 /** cache interface  */
