@@ -112,6 +112,8 @@ struct bundle_block_t {
 	uint8_t payload[];
 } __attribute__((packed));
 
+//FIXME spricht was dagegen bundle_num an den Anfang zu setzten?
+//FIXME + uint8_t internal_flags?
 /**
 * \brief this struct defines the bundle for internal processing
 */

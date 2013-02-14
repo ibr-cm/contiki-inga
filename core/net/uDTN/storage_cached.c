@@ -67,7 +67,7 @@ struct bundle_list_entry_t {
 	uint32_t bundle_num;
 
 	/** pointer to the actual bundle stored in MMEM */
-	//struct mmem *bundle;
+	struct mmem *bundle;
 };
 
 // List and memory blocks for the bundles
@@ -250,7 +250,6 @@ uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_n
 //FIXME Look for duplicates in the storage
 
 
-
 	if( last_index_entry == BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS ) { //FIXME kann dank segmentierung auch noch später auftreten
 		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "Cannot store bundle, no room");
 		return 0;
@@ -279,8 +278,8 @@ uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_n
 	uint8_t buffer[528];
 
 	uint16_t i;
-	for(i=0; i<528; ++i){
-		buffer[i]=i%255;
+	for(i=0; i<528; i+=4){
+		buffer[i]=bundle->bundle_num;
 	}
 
 	/* read page */
@@ -339,8 +338,47 @@ uint16_t storage_cached_delete_bundle(uint32_t bundle_number, uint8_t reason)
  */
 struct mmem *storage_cached_read_bundle(uint32_t bundle_num)
 {
-	struct bundle entry;
-	return entry->bundle;
+    //FIXME das wollen wir machen...
+    //bundlemem = bundle_recover_bundle(payload, length);
+
+    struct bundle_t * bundle = NULL;
+
+    // Look for the bundle we are talking about
+//    for(suchen) {
+//        bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
+//
+//        if( bundle->bundle_num == bundle_num ) {
+//            break;
+//        }
+//    }
+
+//    if( nix da ) {
+//        LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "Could not find bundle %lu in storage_mmem_read_bundle", bundle_num);
+//        return 0;
+//    }
+
+//    if( bundle->size == 0 ) {
+//        LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "Found bundle %lu but file size is %u", bundle_num, entry->bundle->size);
+//        return 0;
+//    }
+
+    // Someone requested the bundle, he will have to decrease the reference counter again
+    bundle_increment(bundle);
+
+    //FIXME soll das wirklich hier gemacht werden?
+    /* How long did this bundle rot in our storage? */
+    uint32_t elapsed_time = clock_seconds() - bundle->rec_time;
+
+    /* Update lifetime of bundle */
+    if( bundle->lifetime < elapsed_time ) {
+        bundle->lifetime = 0;
+        bundle->rec_time = clock_seconds();
+    } else {
+        bundle->lifetime = bundle->lifetime - elapsed_time;
+        bundle->rec_time = clock_seconds();
+    }
+
+    return bundle;
 	//FIXME berechnet Speicheradresse (Fkt)
 	//      while (Cacheblock ID =! bundle_num)
 	//        if (cache_access(Speicheradresse)) == NULL
@@ -380,6 +418,7 @@ uint16_t storage_cached_get_bundle_numbers(void){
  * mode: head, next, free
  *
  */
+//FIXME status
 struct storage_index_entry_t * storage_cached_get_bundles(uint8_t mode, uint8_t *index_array_entrys){
 
     *index_array_entrys = last_index_entry; //FIXME Unterscheidung zwischen dem und BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS
