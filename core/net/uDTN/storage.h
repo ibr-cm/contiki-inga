@@ -27,6 +27,7 @@
 #include "bundle.h"
 
 #define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66
+#define BUNDLE_STORAGE_CONCURRENT_BUNDLES CACHE_BLOCKS_NUM //FIXME
 
 /**
  * Which storage driver are we going to use?
@@ -62,20 +63,8 @@
 #define BUNDLE_STORAGE_INIT 0
 #endif
 
-// FIXME: löschen
 /**
- * Representation of a bundle as returned by the "get_bundles" call to the storage module
- */
-struct storage_entry_t {
-	/** pointer to the next list element */
-	struct storage_entry_t * next;
-
-	/** Internal number of the bundle */
-	uint32_t bundle_num;
-};
-
-/**
- * Representation of a bundle in the array returned by the "get_bundles" call to the storage module
+ * Representation of a bundle in the array returned by the "get_index_block" call to the storage module
  */
 struct storage_index_entry_t {
     /** Internal number of the bundle */
@@ -90,23 +79,81 @@ struct storage_driver {
 	char *name;
 	/** called by agent a startup */
 	void (* init)(void);
-	void (* reinit)(void);
-	/** saves a bundle */
+	void (* reinit)(void); //FIXME clear_storage() ?
+	/**
+	 * \brief saves a bundle
+	 * \param pointer to bundle struct
+     * \param pointer for BundleID
+	 * \return 0 on error, 1 on success
+	 */
 	uint8_t (* save_bundle)(struct mmem *bundlemem, uint32_t ** bundle_number);
-	/** deletes a bundle */ //FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden?
-	uint16_t (* del_bundle)(uint32_t bundle_num, uint8_t reason);
-	/** reads a bundle */ //FIXME mode:head, next, free
-	struct mmem *(* read_bundle)(uint32_t bundle_num);
+    /**
+     * \brief appends data to stored bundle
+     * \param pointer to BundleID
+     * \param cl flags for segmentation (first, last)
+     * \param pointer to bundle data
+     * \param bundle data length
+     * \return 0 on error, 1 on success
+     */
+    uint8_t (* append_to_bundle)(uint32_t ** bundle_number, uint8_t flags , uint8_t *data, uint16_t data_length);
+    /**
+     * \brief deletes a bundle
+     * \param BundleID
+     * \return 0 on error, 1 on success
+     */
+	//FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden?
+	uint8_t (* del_bundle)(uint32_t bundle_num);
+    /**
+     * \brief reads a bundle
+     * \param BundleID
+     * \return pointer to bundle struct
+     */
+	//FIXME mode:head, next, free
+	struct mmem *(* read_bundle)(uint32_t bundle_num); //FIXME pointer um stackspeicher zu sparen?
+    /**
+     * \brief reads bundle payload
+     * \param BundleID
+     * \param start offset in payload
+     * \param end offset in payload
+     * \param pointer for data
+     * \return 0 on error, 1 on success, 2 on more data available (segmentation)
+     */
+    uint8_t (* read_bundle_data)(uint32_t bundle_num, uint32_t start_offset, uint32_t end_offset, uint8_t *data); //FIXME pointer um stackspeicher zu sparen?
 	//FIXME oder so: read_bundle_done(ID)
-	/** checks if there is space for a bundle */
-	uint16_t (* free_space)(struct mmem *bundlemem);
+    /**
+     * \brief returns number of free bundle slots in storage, multiply with DATA_BLOCK_SIZE for Bytes
+     * \return number of free bundle slots in storage
+     */
+	uint32_t (* free_space)(void);
 	/** returns the number of saved bundles */
 	uint16_t (* get_bundle_num)(void);
-	/** returns pointer to list of bundles */ //FIXME Rückgabewert, evtl. Parameter
-	struct storage_entry_t * (* get_bundles)(void);
-	//FIXME oder so: get_bundles_reset(), get_bundles_get_length()
-	//FIXME
-	//irgendwas das die Garbage Collection veranlasst
+    /**
+     * \brief opens bundle index session
+     * \return 0 on no session free, session id
+     */
+	uint8_t (* get_index_session)(void);
+    /**
+     * \brief get number of index arrays
+     * \param session id
+     * \return number of index blocks
+     */
+    uint8_t (* get_index_length)(uint8_t sessionid);
+    /**
+     * \brief get pointer to index array
+     * \param session id
+     * \param entry nr
+     * \return NULL on error, pointer to index array
+     */
+    struct storage_index_entry_t *(* get_index_block)(uint8_t sessionid, uint8_t blocknr);
+    /**
+     * \brief frees memory used by index array
+     * \param session id
+     * \param entry nr
+     * \return 0 on error, 1 on success
+     */
+    uint8_t (* free_index_entry)(uint8_t sessionid, uint8_t blocknr);
+
+	//FIXME irgendwas das die Garbage Collection veranlasst
 };
 extern const struct storage_driver BUNDLE_STORAGE;
 #endif

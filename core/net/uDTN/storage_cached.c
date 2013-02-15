@@ -248,15 +248,15 @@ uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_n
 	bundle_number = HASH.hash_convenience(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
 //FIXME Look for duplicates in the storage
+	// wenn die adresse berechnet wird?
 
 
 	if( last_index_entry == BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS ) { //FIXME kann dank segmentierung auch noch später auftreten
+	    //Garbage Collection starten
+	    //Bei Fehlschlag:
 		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "Cannot store bundle, no room");
 		return 0;
 	}
-
-	// Now we have to update the pointer to our bundle, because MMEM may have been modified (freed) and thus the pointer may have changed
-	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
 	// calculate address
 	bundle_persistent_address = bundle_number % (CACHE_PARTITION_BUNDLES_END - CACHE_PARTITION_BUNDLES_START );

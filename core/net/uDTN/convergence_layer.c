@@ -221,6 +221,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 		/* Bundle is expired */
 		bundle_decrement(ticket->bundle);
 
+		//FIXME warum nicht hier report senden?
 		/* Tell storage to delete - it will take care of the rest */
 		BUNDLE_STORAGE.del_bundle(ticket->bundle_number, REASON_LIFETIME_EXPIRED);
 
