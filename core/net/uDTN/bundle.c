@@ -35,6 +35,7 @@ static uint8_t bundle_decode_block(struct mmem *bundlemem, uint8_t *buffer, int 
 static int bundle_encode_block(struct bundle_block_t *block, uint8_t *buffer, uint8_t max_len);
 
 
+//FIXME hier muss speicherplatz in der storage alloziert werden
 struct mmem * bundle_create_bundle()
 {
 	int ret;
@@ -64,6 +65,9 @@ struct mmem * bundle_create_bundle()
 	return &bs->bundle;
 }
 
+//FIXME Block größer als RAM?
+//      Muss von segmentierung wissen und das an anwendung kommunizieren
+//      oder: add large_block?
 int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_t *data, uint8_t d_len)
 {
 	struct bundle_t *bundle;
@@ -99,6 +103,8 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
 	return d_len;
 }
 
+//FIXME Block größer als RAM?
+//      Muss von segmentierung wissen und das an anwendung kommunizieren
 struct bundle_block_t *bundle_get_block(struct mmem *bundlemem, uint8_t i)
 {
 	struct bundle_t *bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
@@ -251,6 +257,8 @@ uint8_t bundle_get_attr(struct mmem *bundlemem, uint8_t attr, uint32_t *val)
 
 struct mmem *bundle_recover_bundle(uint8_t *buffer, int size)
 {
+    //FIXME 2 weitere parameter: segm_flags, source (siehe convergence_layer.c
+    //wenn 2. - n. segment, nur blöcke ersetzen oder anhängen
 	uint32_t primary_size, value;
 	uint8_t offs = 0;
 	struct mmem *bundlemem;
@@ -338,6 +346,9 @@ err:
 
 }
 
+//FIXME wenn segment, block ist größer als momentan vorhandene daten
+//      oder beginnt nicht mit headerinfos, sondern mit rohen daten, headerinfos für weiteren block folgen evtl.
+//      => es muss sich state gemerkt werden
 static uint8_t bundle_decode_block(struct mmem *bundlemem, uint8_t *buffer, int max_len)
 {
 	uint8_t type, block_offs, offs = 0;

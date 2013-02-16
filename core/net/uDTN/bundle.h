@@ -50,6 +50,9 @@
 
 /* Bundle Block Types */
 #define BUNDLE_BLOCK_TYPE_PAYLOAD		0x01
+#define BUNDLE_BLOCK_TYPE_SEGM_FIRST	0x02  //FIXME
+#define BUNDLE_BLOCK_TYPE_SEGM_MIDDLE	0x03
+#define BUNDLE_BLOCK_TYPE_SEGM_LAST 	0x04
 
 /* Bundle deletion reasons */
 #define REASON_NO_INFORMATION			0x00
@@ -108,7 +111,9 @@ struct bundle_block_t {
 	/* Variable array at the end to hold the payload
 	 * Size is uint8 despite being an SDNV because
 	 * IEEE-805.15.4 limits the size here. */
+    //FIXME größer machen...
 	uint8_t block_size;
+    //FIXME stattdessen pointer
 	uint8_t payload[];
 } __attribute__((packed));
 

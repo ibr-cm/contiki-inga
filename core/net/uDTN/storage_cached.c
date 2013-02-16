@@ -259,7 +259,7 @@ uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_n
 	}
 
 	// calculate address
-	bundle_persistent_address = bundle_number % (CACHE_PARTITION_BUNDLES_END - CACHE_PARTITION_BUNDLES_START );
+	bundle_persistent_address = bundle_number % (CACHE_PARTITION_BUNDLES_END - CACHE_PARTITION_BUNDLES_START);
 	//struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_block(bundle_persistent_address);
 
 	//FIXME Check auf Kollisionen
@@ -269,7 +269,7 @@ uint8_t storage_cached_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_n
         for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
             if(temp_index_array_collision_check[i] == bundle_persistent_address){
                 bundle_persistent_address_collision = TRUE;
-                ++bundle_persistent_address;
+                bundle_persistent_address=(++bundle_persistent_address)%(CACHE_PARTITION_BUNDLES_END - CACHE_PARTITION_BUNDLES_START);
                 break;
             }
         }

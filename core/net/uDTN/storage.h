@@ -27,7 +27,7 @@
 #include "bundle.h"
 
 #define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66
-#define BUNDLE_STORAGE_CONCURRENT_BUNDLES CACHE_BLOCKS_NUM //FIXME
+#define BUNDLE_STORAGE_CONCURRENT_BUNDLES CACHE_BLOCKS_NUM //FIXME ist das BUNDLE_NUM aus bundleslot.c ?
 
 /**
  * Which storage driver are we going to use?
@@ -81,6 +81,13 @@ struct storage_driver {
 	void (* init)(void);
 	void (* reinit)(void); //FIXME clear_storage() ?
 	/**
+	 * \brief calculates BundleID
+	 * \param pointer to bundle struct
+	 * \return BundleID
+	 */
+    //FIXME dispatching_check_report berechnet HASH selbst
+	uint32_t (* get_bundle_num)(struct mmem *bundlemem);
+	/**
 	 * \brief saves a bundle
 	 * \param pointer to bundle struct
      * \param pointer for BundleID
@@ -99,10 +106,11 @@ struct storage_driver {
     /**
      * \brief deletes a bundle
      * \param BundleID
+     * \param pointer to index entry, NULL if unknown (use case: received status report)
      * \return 0 on error, 1 on success
      */
 	//FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden?
-	uint8_t (* del_bundle)(uint32_t bundle_num);
+	uint8_t (* del_bundle)(uint32_t bundle_num, struct storage_index_entry_t *index_entry);
     /**
      * \brief reads a bundle
      * \param BundleID
@@ -124,9 +132,9 @@ struct storage_driver {
      * \brief returns number of free bundle slots in storage, multiply with DATA_BLOCK_SIZE for Bytes
      * \return number of free bundle slots in storage
      */
-	uint32_t (* free_space)(void);
+	uint32_t (* get_free_space)(void);
 	/** returns the number of saved bundles */
-	uint16_t (* get_bundle_num)(void);
+	uint16_t (* get_bundle_count)(void);
     /**
      * \brief opens bundle index session
      * \return 0 on no session free, session id

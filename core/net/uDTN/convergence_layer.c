@@ -414,21 +414,14 @@ int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, ui
 	struct bundle_t * bundle = NULL;
 	int n;
 
-	/* FIXME Nur unsegmentierte Bündel erlaubt
-	 *
-	 * statt bundle_recover_bundle():
-	 * bundle_create_bundle()
-     * bundle_set_attr(bundle_num)
-	 * bundle_set_attr(internal_flags)
-	 * dann direkt mittels gemerkter id (von dispatcher) wegspeichern
-	 *
-	 */
+	/* FIXME Nur unsegmentierte Bündel erlaubt */
 	if( flags != (CONVERGENCE_LAYER_FLAGS_FIRST | CONVERGENCE_LAYER_FLAGS_LAST ) ) {
 		LOG(LOGD_DTN, LOG_CL, LOGL_ERR, "Bundle received %p from %u.%u with invalid flags %02X", payload, source->u8[0], source->u8[1], flags);
 	}
 
 	/* Allocate memory, parse the bundle and set reference counter to 1 */
-	bundlemem = bundle_recover_bundle(payload, length);
+	bundlemem = bundle_recover_bundle(payload, length); //FIXME hier CONVERGENCE_LAYER_FLAGS_... mit übergeben, damit segmentierter block erstellt werden kann
+                                                        //FIXME mittels bundle->msrc können weitere segmente zugeordnet werden
 	if( !bundlemem ) {
 		LOG(LOGD_DTN, LOG_CL, LOGL_WRN, "Error recovering bundle");
 		return -1;

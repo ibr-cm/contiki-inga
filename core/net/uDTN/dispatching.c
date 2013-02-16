@@ -30,8 +30,6 @@
 
 #include "dispatching.h"
 
-//FIXME state_merken[BUNDLE_STORAGE_CONCURRENT_BUNDLES] {src_address, bundle_num, memb-pointer}
-
 /**
  * \brief This function checks, whether an incoming admin record is a bundle delivery report. If so, the corresponding bundle is deleted from storage
  * \param bundlemem Pointer to the MMEM struct containing the bundle
@@ -164,14 +162,13 @@ int dispatching_dispatch_bundle(struct mmem *bundlemem) {
 	bundlemem = NULL;
 
 	// Send out a "received" status report if requested
-	if( received_report ) { //FIXME nur beim 1. segment merken
+	if( received_report ) { //FIXME && SEGM_FLAGS == ONLY_ONE/LAST, sicherstellen, dass bundlemem lange genug im RAM ist
 		// Read back from storage
 		bundlemem = BUNDLE_STORAGE.read_bundle(*bundle_number);
 
 		if( bundlemem != NULL) {
 			LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "Sending out delivery report for bundle %lu", *bundle_number);
 
-	        //FIXME nur beim letzten segment report schicken
 			// Send out report
 			STATUSREPORT.send(bundlemem, NODE_RECEIVED_BUNDLE, NO_ADDITIONAL_INFORMATION);
 
