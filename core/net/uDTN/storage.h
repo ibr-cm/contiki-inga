@@ -80,6 +80,9 @@ struct storage_driver {
 	/** called by agent a startup */
 	void (* init)(void);
 	void (* reinit)(void); //FIXME clear_storage() ?
+    //FIXME
+    struct bundle_slot_t *get_bundleslot(); //FIXME recycle used bundleslot
+    void free_bundleslot();                 //FIXME release mmem space for other uses
 	/**
 	 * \brief calculates BundleID
 	 * \param pointer to bundle struct

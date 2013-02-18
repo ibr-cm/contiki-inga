@@ -18,6 +18,10 @@
 #include "mmem.h"
 #include "contiki.h"
 
+//FIXME
+#define MAX_SLOT_SIZE 528
+#define MIN_SLOT_SIZE 528
+
 /* Kernel container_of function
  * WARNING: The ({}) macro extenstion is GCC-specific,
  * but it's worth using it here */

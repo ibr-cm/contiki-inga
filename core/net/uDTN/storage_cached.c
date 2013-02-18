@@ -172,6 +172,11 @@ void storage_cached_prune()
 	//FIXME option "build index"
 }
 
+void storage_find_expired_bundles(uint16_t start_offset, uint16_t end_offset){
+    //FIXME setzt alle abgelaufenen bündel zwischen s_o und e_o auf die liste zum löschen
+    //      del_bundles[] und/oder del_addresses[]
+}
+
 /**
  * \brief housekeeping for bundle storage
  */

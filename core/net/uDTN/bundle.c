@@ -36,6 +36,9 @@ static int bundle_encode_block(struct bundle_block_t *block, uint8_t *buffer, ui
 
 
 //FIXME hier muss speicherplatz in der storage alloziert werden
+//      parameter: anzahl blöcke
+//                 pointer auf gewünschte payloadgröße, wird auf max. segm-payload-size (MAX_SLOT_SIZE - anz_blöcke*sizeof(blockstruct)) gesetzt
+//      header wird entweder übergeben, oder neu alloziert
 struct mmem * bundle_create_bundle()
 {
 	int ret;
@@ -49,6 +52,7 @@ struct mmem * bundle_create_bundle()
 		return NULL;
 	}
 
+    //FIXME hier MIN_SLOT_SIZE versuchen
 	ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
 	if (!ret) {
 		bundleslot_free(bs);
@@ -64,6 +68,11 @@ struct mmem * bundle_create_bundle()
 
 	return &bs->bundle;
 }
+
+//FIXME
+// bundle_init() : hiernach, oder nach bundle_recover steht id bereit
+// bundle_get_id()
+// bundle_add_bundleslot() bundle_add_segment() ?
 
 //FIXME Block größer als RAM?
 //      Muss von segmentierung wissen und das an anwendung kommunizieren
@@ -104,7 +113,7 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
 }
 
 //FIXME Block größer als RAM?
-//      Muss von segmentierung wissen und das an anwendung kommunizieren
+//      Muss von segmentierung wissen und das an anwendung kommunizieren?
 struct bundle_block_t *bundle_get_block(struct mmem *bundlemem, uint8_t i)
 {
 	struct bundle_t *bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
@@ -263,7 +272,7 @@ struct mmem *bundle_recover_bundle(uint8_t *buffer, int size)
 	uint8_t offs = 0;
 	struct mmem *bundlemem;
 	struct bundle_t *bundle;
-	bundlemem = bundle_create_bundle();
+	bundlemem = bundle_create_bundle(); //FIXME das machen wir in zukunft ausserhalb
 	if (!bundlemem)
 		return NULL;
 

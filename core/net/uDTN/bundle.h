@@ -151,10 +151,19 @@ struct bundle_t{
 #if DEBUG_H
 	uint16_t debug_time;
 #endif
-	uint8_t num_blocks;
+	uint8_t num_blocks; //FIXME ist erst beim letzten segment bekannt, kommt daher in index?
 
 	uint8_t block_data[];
+    //FIXME
+    //uint16_t num_segments
+    //uint8_t * first_segment
+    //FIXME
+    //uint16_t storage_offset
+    //uint16_t storage_next
 } __attribute__ ((packed));
+
+//FIXME
+// struct bundle_index_t aus storage.h hierher verschieben
 
 /**
  * \brief generates the bundle struct from raw data
