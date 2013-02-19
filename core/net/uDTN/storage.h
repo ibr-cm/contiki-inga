@@ -26,9 +26,6 @@
 
 #include "bundle.h"
 
-#define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66
-#define BUNDLE_STORAGE_CONCURRENT_BUNDLES CACHE_BLOCKS_NUM //FIXME ist das BUNDLE_NUM aus bundleslot.c ?
-
 /**
  * Which storage driver are we going to use?
  * Default is RAM
@@ -63,6 +60,8 @@
 #define BUNDLE_STORAGE_INIT 0
 #endif
 
+#define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66 //FIXME = floor(MAX_SLOT_SIZE / sizeof(struct bundle_index_entry_t))
+
 /**
  * Representation of a bundle in the array returned by the "get_index_block" call to the storage module
  */
@@ -79,7 +78,7 @@ struct storage_driver {
 	char *name;
 	/** called by agent a startup */
 	void (* init)(void);
-	void (* reinit)(void); //FIXME clear_storage() ?
+	void (* flush_storage)(void); //FIXME reinit ist unklar
 	/**
 	 * \brief puts bundle in storage, creates index entry
 	 * \param pointer to bundle struct
@@ -127,7 +126,7 @@ struct storage_driver {
 	//FIXME storage muss sich merken: block_data_start_offset,
 	                                //länge des belegten speicherplatzes in block_data
 	                                //cache flags
-	struct mmem *(* read_bundle)(uint32_t *bundle_num, uint32_t block_data_start_offset,uint16_t block_data_length);
+	struct mmem *(* read_bundle)(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length);
     /**
      * \brief returns number of free bundle slots in storage, multiply with DATA_BLOCK_SIZE for Bytes
      * \return number of free bundle slots in storage
@@ -136,32 +135,19 @@ struct storage_driver {
 	/** returns the number of saved bundles */
 	uint16_t (* get_bundle_count)(void);
     /**
-     * \brief opens bundle index session
-     * \return 0 on no session free, session id
+     * \brief get pointer to index array contained in bundleslot
+     * \param block nr
+     * \return NULL on error, pointer to index array storage_index_entry_t
+     *
+     * block 0 is always in memory, blocks 1 to BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS can be swapped to persistent storage
+     * call bundle_increment(index_block) to protect indexblock from swapping, the block has to be released via bundle_decrement(index_block) afterwards
      */
-	uint8_t (* get_index_session)(void);
-    /**
-     * \brief get number of index arrays
-     * \param session id
-     * \return number of index blocks
-     */
-    uint8_t (* get_index_length)(uint8_t sessionid);
-    /**
-     * \brief get pointer to index array
-     * \param session id
-     * \param entry nr
-     * \return NULL on error, pointer to index array
-     */
-    struct storage_index_entry_t *(* get_index_block)(uint8_t sessionid, uint8_t blocknr);
-    /**
-     * \brief frees memory used by index array
-     * \param session id
-     * \param entry nr
-     * \return 0 on error, 1 on success
-     */
-    uint8_t (* free_index_entry)(uint8_t sessionid, uint8_t blocknr);
+    struct mmem *(* get_index_block)(uint8_t blocknr);
 
 	//FIXME irgendwas das die Garbage Collection veranlasst
+
+
+
 
     //FIXME alte funktionen
 
@@ -172,6 +158,12 @@ struct storage_driver {
      */
     //FIXME dispatching_check_report berechnet HASH selbst, ID kommt nach bundle.c
     //uint32_t (* get_bundle_num)(struct mmem *bundlemem);
+    /**
+     * \brief frees memory used by index array
+     * \param block nr
+     * \return 0 on error, 1 on success
+     */
+    //uint8_t (* free_index_block)(uint8_t blocknr);
     /**
      * \brief appends data to stored bundle
      * \param pointer to BundleID
@@ -192,6 +184,17 @@ struct storage_driver {
      */
     //FIXME oder so: read_bundle_done(ID)
     //uint8_t (* read_bundle_data)(uint32_t bundle_num, uint32_t start_offset, uint32_t end_offset, uint8_t *data);
+    /**
+     * \brief opens bundle index session
+     * \return 0 on no session free, session id
+     */
+    //uint8_t (* get_index_session)(void);
+    /**
+     * \brief get number of index arrays
+     * \param session id
+     * \return number of index blocks
+     */
+    //uint8_t (* get_index_length)(uint8_t sessionid);
 };
 extern const struct storage_driver BUNDLE_STORAGE;
 #endif

@@ -34,11 +34,6 @@
 static uint8_t bundle_decode_block(struct mmem *bundlemem, uint8_t *buffer, int max_len);
 static int bundle_encode_block(struct bundle_block_t *block, uint8_t *buffer, uint8_t max_len);
 
-
-//FIXME hier muss speicherplatz in der storage alloziert werden
-//      parameter: anzahl blöcke
-//                 pointer auf gewünschte payloadgröße, wird auf max. segm-payload-size (MAX_SLOT_SIZE - anz_blöcke*sizeof(blockstruct)) gesetzt
-//      header wird entweder übergeben, oder neu alloziert
 struct mmem * bundle_create_bundle()
 {
 	int ret;

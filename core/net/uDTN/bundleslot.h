@@ -33,7 +33,7 @@ struct bundle_slot_t {
 	struct bundle_slot_t *next;
 	uint8_t ref;
 	int type;
-	struct mmem bundle;
+	struct mmem bundle;  //FIXME umbenennen in slot? oder das ganze in mmemslots?
 };
 
 struct bundle_slot_t *bundleslot_get_free();
