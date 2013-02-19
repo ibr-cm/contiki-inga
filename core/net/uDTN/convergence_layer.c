@@ -423,7 +423,7 @@ int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, ui
 
 	/* Allocate memory, parse the bundle and set reference counter to 1 */
 	bundlemem = bundle_recover_bundle(payload, length); //FIXME hier CONVERGENCE_LAYER_FLAGS_... mit übergeben, damit segmentierter block erstellt werden kann
-                                                        //FIXME mittels bundle->msrc können weitere segmente zugeordnet werden
+                                                        //FIXME mittels source == bundle->msrc können weitere segmente zugeordnet werden
                                                         //FIXME length für rückgabewert missbrauchen, wenn ungleich null muss neuer bundleslot aufgemacht werden
 	if( !bundlemem ) {
 		LOG(LOGD_DTN, LOG_CL, LOGL_WRN, "Error recovering bundle");

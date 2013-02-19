@@ -66,7 +66,7 @@
 /**
  * Representation of a bundle in the array returned by the "get_index_block" call to the storage module
  */
-struct storage_index_entry_t {
+struct bundle_index_entry_t { //FIXME nach bundle.h
     /** Internal number of the bundle */
     uint32_t bundle_num;
     
@@ -80,57 +80,54 @@ struct storage_driver {
 	/** called by agent a startup */
 	void (* init)(void);
 	void (* reinit)(void); //FIXME clear_storage() ?
-    //FIXME
-    struct bundle_slot_t *get_bundleslot(); //FIXME recycle used bundleslot
-    void free_bundleslot();                 //FIXME release mmem space for other uses
 	/**
-	 * \brief calculates BundleID
+	 * \brief puts bundle in storage, creates index entry
 	 * \param pointer to bundle struct
-	 * \return BundleID
+     * \param segmentation flag: FIRST_SEGMENT, SEGMENT, LAST_SEGMENT, NO_SEGMENT
+     * \return 0 on error, 1 on success
+	 *
+	 * creates events: dtn_bundle_stored, dtn_bundle_in_storage_event, dtn_bundle_store_failed, ...  //FIXME
 	 */
-    //FIXME dispatching_check_report berechnet HASH selbst
-	uint32_t (* get_bundle_num)(struct mmem *bundlemem);
-	/**
-	 * \brief saves a bundle
-	 * \param pointer to bundle struct
-     * \param pointer for BundleID
-	 * \return 0 on error, 1 on success
-	 */
-	uint8_t (* save_bundle)(struct mmem *bundlemem, uint32_t ** bundle_number);
+	 uint8_t (* save_bundle)(struct mmem *bundlemem, uint8_t flags);
     /**
-     * \brief appends data to stored bundle
-     * \param pointer to BundleID
-     * \param cl flags for segmentation (first, last)
-     * \param pointer to bundle data
-     * \param bundle data length
+     * \brief add another segment to bundlemem
+     * \param pointer to bundle struct which needs more memory
+     * \param minimum size needed
+     * \return 0 on error, 1 on success
+     *
+     * reserves another bundleslot if necessary, can accumulate min_size of multiple calls to save bundleslots
+     */
+    uint8_t (* add_segment_to_bundle)(struct mmem *bundlemem, uint16_t min_size);
+    /**
+     * \brief storage may never release bundleslots once they are allocated, this releases 1 bundleslot
      * \return 0 on error, 1 on success
      */
-    uint8_t (* append_to_bundle)(uint32_t ** bundle_number, uint8_t flags , uint8_t *data, uint16_t data_length);
+    uint8_t (* release_bundleslot)();
     /**
      * \brief deletes a bundle
-     * \param BundleID
+     * \param BundleID, NULL if index entry != NULL
      * \param pointer to index entry, NULL if unknown (use case: received status report)
      * \return 0 on error, 1 on success
+     *
+     * deletes index entry directly, if provided
+     * marks bundle for garbage collection
      */
-	//FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden?
-	uint8_t (* del_bundle)(uint32_t bundle_num, struct storage_index_entry_t *index_entry);
+	//FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden? (Stichwort: REASON_DELIVERED)
+	uint8_t (* del_bundle)(uint32_t *bundle_num, struct storage_index_entry_t *index_entry);
     /**
      * \brief reads a bundle
-     * \param BundleID
+     * \param pointer to BundleID
+     * \param offset in block data
+     * \param length of requested block data
      * \return pointer to bundle struct
+     *
+     * returns bundle struct, sets/changes the block_data field so it starts at block_data_start_offset and contains at least block_data_length bytes
+     * for block_data_start_offset = block_data_length = 0, the block_data field is not touched, if already in memory, else it contains the first block
      */
-	//FIXME mode:head, next, free
-	struct mmem *(* read_bundle)(uint32_t bundle_num); //FIXME pointer um stackspeicher zu sparen?
-    /**
-     * \brief reads bundle payload
-     * \param BundleID
-     * \param start offset in payload
-     * \param end offset in payload
-     * \param pointer for data
-     * \return 0 on error, 1 on success, 2 on more data available (segmentation)
-     */
-    uint8_t (* read_bundle_data)(uint32_t bundle_num, uint32_t start_offset, uint32_t end_offset, uint8_t *data); //FIXME pointer um stackspeicher zu sparen?
-	//FIXME oder so: read_bundle_done(ID)
+	//FIXME storage muss sich merken: block_data_start_offset,
+	                                //länge des belegten speicherplatzes in block_data
+	                                //cache flags
+	struct mmem *(* read_bundle)(uint32_t *bundle_num, uint32_t block_data_start_offset,uint16_t block_data_length);
     /**
      * \brief returns number of free bundle slots in storage, multiply with DATA_BLOCK_SIZE for Bytes
      * \return number of free bundle slots in storage
@@ -165,6 +162,36 @@ struct storage_driver {
     uint8_t (* free_index_entry)(uint8_t sessionid, uint8_t blocknr);
 
 	//FIXME irgendwas das die Garbage Collection veranlasst
+
+    //FIXME alte funktionen
+
+    /**
+     * \brief calculates BundleID
+     * \param pointer to bundle struct
+     * \return BundleID
+     */
+    //FIXME dispatching_check_report berechnet HASH selbst, ID kommt nach bundle.c
+    //uint32_t (* get_bundle_num)(struct mmem *bundlemem);
+    /**
+     * \brief appends data to stored bundle
+     * \param pointer to BundleID
+     * \param cl flags for segmentation (first, last)
+     * \param pointer to bundle data
+     * \param bundle data length
+     * \return 0 on error, 1 on success
+     */
+    //uint8_t (* append_to_bundle)(uint32_t ** bundle_number, uint8_t flags , uint8_t *data, uint16_t data_length);
+    //FIXME mode:head, next, free
+    /**
+     * \brief reads bundle payload
+     * \param BundleID
+     * \param start offset in payload
+     * \param end offset in payload
+     * \param pointer for data
+     * \return 0 on error, 1 on success, 2 on more data available (segmentation)
+     */
+    //FIXME oder so: read_bundle_done(ID)
+    //uint8_t (* read_bundle_data)(uint32_t bundle_num, uint32_t start_offset, uint32_t end_offset, uint8_t *data);
 };
 extern const struct storage_driver BUNDLE_STORAGE;
 #endif

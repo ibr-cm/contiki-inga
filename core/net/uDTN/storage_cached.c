@@ -40,7 +40,7 @@ static uint8_t next_mode = STORAGE_CACHED_GET_BUNDLES_HEAD; //FIXME flags zusamm
 
 //FIXME dummy index block
 //FIXME besser mehr dimensionen?
-static struct storage_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
+static struct bundle_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 static uint8_t temp_index_array_toggle = 0;
 static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 
@@ -490,6 +490,18 @@ struct storage_index_entry_t * storage_cached_get_bundles(uint8_t mode, uint8_t 
 	//      freigeben von liste?
 	//      Kümmert sich um das Nachladen vom Flash
 
+}
+
+
+//FIXME
+/**
+ * \brief recycle used bundleslot
+ * \param pointer to bundle struct which should release 1 bundleslot
+ * \return free bundleslot on success
+ */
+struct bundle_slot_t *st_bundleslot_get_free(struct mmem *bundlemem){
+    struct bundle_slot_t slot;
+    return slot;
 }
 
 const struct storage_driver storage_cached = {
