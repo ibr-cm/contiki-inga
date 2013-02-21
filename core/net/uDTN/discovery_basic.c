@@ -211,8 +211,23 @@ void discovery_basic_receive(rimeaddr_t * source, uint8_t * payload, uint8_t len
  */
 void discovery_basic_neighbour_found(rimeaddr_t * neighbour)
 {
-	LOG(LOGD_DTN, LOG_DISCOVERY, LOGL_DBG, "sending DTN BEACON Event for %u.%u", neighbour->u8[0], neighbour->u8[1]);
-	process_post(&agent_process, dtn_beacon_event, neighbour);
+	struct discovery_basic_neighbour_list_entry * entry;
+
+	for(entry = list_head(neighbour_list);
+			entry != NULL;
+			entry = entry->next) {
+		if( entry->active &&
+				rimeaddr_cmp(&(entry->neighbour), neighbour) ) {
+			break;
+		}
+	}
+
+	if( entry == NULL ) {
+		// Apparently previously unknown neighbour
+	} else {
+		LOG(LOGD_DTN, LOG_DISCOVERY, LOGL_DBG, "sending DTN BEACON Event for %u.%u", neighbour->u8[0], neighbour->u8[1]);
+		process_post(&agent_process, dtn_beacon_event, &entry->neighbour);
+	}
 
 	// Once we have found a new neighbour, we will stop discovering other nodes
 	discovery_basic_stop_pending();
@@ -372,7 +387,7 @@ PROCESS_THREAD(discovery_process, ev, data)
 				}
 			}
 
-			etimer_reset(&discovery_timeout_timer);
+			etimer_restart(&discovery_timeout_timer);
 		}
 
 		/**
@@ -385,7 +400,7 @@ PROCESS_THREAD(discovery_process, ev, data)
 			if( discovery_pending > (DISCOVERY_TRIES + 1)) {
 				discovery_basic_stop_pending();
 			} else {
-				etimer_reset(&discovery_pending_timer);
+				etimer_restart(&discovery_pending_timer);
 			}
 		}
 

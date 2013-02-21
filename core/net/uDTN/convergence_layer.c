@@ -90,6 +90,12 @@ int convergence_layer_queue;
  */
 uint8_t outgoing_sequence_number;
 
+/**
+ * Indicate when a continue event or poll to ourselves is pending to avoid
+ * exceeding the event queue size 
+ */
+uint8_t convergence_layer_pending;
+
 int convergence_layer_init(void)
 {
 	// Start CL process
@@ -151,12 +157,6 @@ int convergence_layer_free_transmit_ticket(struct transmit_ticket_t * ticket)
 
 	LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "Freeing ticket %p", ticket);
 
-	list_remove(transmission_ticket_list, ticket);
-
-	memset(ticket, 0, sizeof(struct transmit_ticket_t));
-
-	memb_free(&transmission_ticket_mem, ticket);
-
 	/* Only dequeue bundles that have been in the queue */
 	if( (ticket->flags & CONVERGENCE_LAYER_QUEUE_ACTIVE) || (ticket->flags & CONVERGENCE_LAYER_QUEUE_DONE) || (ticket->flags & CONVERGENCE_LAYER_QUEUE_FAIL) ) {
 		convergence_layer_queue--;
@@ -164,6 +164,11 @@ int convergence_layer_free_transmit_ticket(struct transmit_ticket_t * ticket)
 
 	/* Count the used slots */
 	convergence_layer_slots--;
+
+	/* Remove ticket from list and free memory */
+	list_remove(transmission_ticket_list, ticket);
+	memset(ticket, 0, sizeof(struct transmit_ticket_t));
+	memb_free(&transmission_ticket_mem, ticket);
 
 	return 1;
 }
@@ -602,12 +607,16 @@ int convergence_layer_status(void * pointer, uint8_t outcome)
 	convergence_layer_transmitting = 0;
 
 	/* Notify the process to commence transmitting outgoing bundles */
-	if( outcome == CONVERGENCE_LAYER_STATUS_NOSEND ) {
-		/* Send event to slow the stuff down */
-		process_post(&convergence_layer_process, PROCESS_EVENT_CONTINUE, NULL);
-	} else {
-		/* Poll to make it faster */
-		process_poll(&convergence_layer_process);
+	if( convergence_layer_pending == 0 ) {
+		if( outcome == CONVERGENCE_LAYER_STATUS_NOSEND ) {
+			/* Send event to slow the stuff down */
+			process_post(&convergence_layer_process, PROCESS_EVENT_CONTINUE, NULL);
+		} else {
+			/* Poll to make it faster */
+			process_poll(&convergence_layer_process);
+		}
+
+		convergence_layer_pending = 1;
 	}
 
 	if( pointer == NULL ) {
@@ -857,6 +866,7 @@ PROCESS_THREAD(convergence_layer_process, ev, data)
 	convergence_layer_transmitting = 0;
 	outgoing_sequence_number = 0;
 	convergence_layer_queue = 0;
+	convergence_layer_pending = 0;
 
 	/* Set timer */
 	etimer_set(&stale_timer, CLOCK_SECOND);
@@ -866,10 +876,12 @@ PROCESS_THREAD(convergence_layer_process, ev, data)
 
 		if( etimer_expired(&stale_timer) ) {
 			check_blocked_neighbours();
-			etimer_reset(&stale_timer);
+			etimer_restart(&stale_timer);
 		}
 
 		if( ev == PROCESS_EVENT_POLL || ev == PROCESS_EVENT_CONTINUE ) {
+			convergence_layer_pending = 0;
+
 			/* If we are currently transmitting, we cannot send another bundle */
 			if( convergence_layer_transmitting ) {
 				/* We will get polled again when the MAC layers calls us back,

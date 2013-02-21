@@ -25,7 +25,6 @@
 #include "clock.h"
 #include "net/mac/frame802154.h" // for IEEE802154_PANID
 #include "logging.h"
-#include "random.h"
 
 #include "dtn_network.h"
 #include "agent.h"
@@ -123,7 +122,7 @@ uint8_t discovery_ipnd_is_neighbour(rimeaddr_t * dest)
 			entry != NULL;
 			entry = entry->next) {
 		if( entry->active &&
-				rimeaddr_cmp(&(entry->neighbour), dest) ) {
+				rimeaddr_cmp(&entry->neighbour, dest) ) {
 			return 1;
 		}
 	}
@@ -326,7 +325,7 @@ void discovery_ipnd_refresh_neighbour(rimeaddr_t * neighbour)
 			entry != NULL;
 			entry = entry->next) {
 		if( entry->active &&
-				rimeaddr_cmp(&(entry->neighbour), neighbour) ) {
+				rimeaddr_cmp(&entry->neighbour, neighbour) ) {
 			entry->timestamp_last = clock_seconds();
 			return;
 		}
@@ -354,7 +353,7 @@ void discovery_ipnd_delete_neighbour(rimeaddr_t * neighbour)
 			entry != NULL;
 			entry = entry->next) {
 		if( entry->active &&
-				rimeaddr_cmp(&(entry->neighbour), neighbour) ) {
+				rimeaddr_cmp(&entry->neighbour, neighbour) ) {
 
 			// Notify the statistics module
 			statistics_contacts_down(&entry->neighbour, entry->timestamp_last - entry->timestamp_discovered);
@@ -397,7 +396,7 @@ void discovery_ipnd_save_neighbour(rimeaddr_t * neighbour)
 	memset(entry, 0, sizeof(struct discovery_basic_neighbour_list_entry));
 
 	entry->active = 1;
-	rimeaddr_copy(&(entry->neighbour), neighbour);
+	rimeaddr_copy(&entry->neighbour, neighbour);
 	entry->timestamp_last = clock_seconds();
 	entry->timestamp_discovered = clock_seconds();
 
@@ -407,7 +406,7 @@ void discovery_ipnd_save_neighbour(rimeaddr_t * neighbour)
 	list_add(neighbour_list, entry);
 
 	// We have found a new neighbour, now go and notify the agent
-	process_post(&agent_process, dtn_beacon_event, neighbour);
+	process_post(&agent_process, dtn_beacon_event, &entry->neighbour);
 }
 
 /**
@@ -447,13 +446,13 @@ PROCESS_THREAD(discovery_process, ev, data)
 			for(entry = list_head(neighbour_list);
 					entry != NULL;
 					entry = entry->next) {
-				if( entry->active && (clock_seconds() - entry->timestamp_last) > (DISCOVERY_NEIGHBOUR_TIMEOUT + 1) ) {
+				if( entry->active && (clock_seconds() - entry->timestamp_last) > DISCOVERY_NEIGHBOUR_TIMEOUT ) {
 					LOG(LOGD_DTN, LOG_DISCOVERY, LOGL_DBG, "Neighbour %u.%u timed out: %lu vs. %lu = %lu", entry->neighbour.u8[0], entry->neighbour.u8[1], clock_time(), entry->timestamp_last, clock_time() - entry->timestamp_last);
 					discovery_ipnd_delete_neighbour(&entry->neighbour);
 				}
 			}
 
-			etimer_reset(&discovery_timeout_timer);
+			etimer_restart(&discovery_timeout_timer);
 		}
 
 		/**
@@ -461,20 +460,7 @@ PROCESS_THREAD(discovery_process, ev, data)
 		 */
 		if( etimer_expired(&discovery_cycle_timer) ) {
 			discovery_ipnd_send();
-	
-			/**
-			 * Slight variance in the discovery interval to ensure, that even two nodes in a 
-			 * simulator that have been started simentanously will find each other one day
-			 */
-			unsigned short random = random_rand();
-
-			if( random < 0.15 * RANDOM_RAND_MAX ) {
-				etimer_set(&discovery_cycle_timer, (DISCOVERY_CYCLE - 1) * CLOCK_SECOND);
-			} else if( random > 0.7 * RANDOM_RAND_MAX ) {
-				etimer_set(&discovery_cycle_timer, (DISCOVERY_CYCLE + 1) * CLOCK_SECOND);
-			} else {
-				etimer_restart(&discovery_cycle_timer);
-			}
+			etimer_restart(&discovery_cycle_timer);
 		}
 	}
 
