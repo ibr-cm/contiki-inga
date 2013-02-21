@@ -89,6 +89,11 @@
 #define PRINTF(...)
 #endif
 
+#define REG_PING_APP_ID 5
+#define REG_PONG_APP_ID 7
+
+#define BUNDLE_LIFETIME 2000
+
 /*---------------------------------------------------------------------------*/
 PROCESS(ping_process, "Ping");
 PROCESS(pong_process, "Pong");
@@ -105,39 +110,30 @@ static clock_time_t get_time()
 }
 
 /* Convenience function to populate a bundle */
-static inline struct mmem *bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16_t src_srv,  uint8_t *data, size_t len)
+static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16_t src_srv,  uint8_t *data, size_t len)
 {
-	uint32_t tmp;
 	struct mmem *bundlemem;
+	struct bundle_block_t *block;
 
 	bundlemem = bundle_create_bundle();
 	if (!bundlemem) {
 		printf("create_bundle failed\n");
-		return NULL;
+		return 0;
 	}
 
-	/* Destination node and service */
-	tmp=dest;
-	bundle_set_attr(bundlemem, DEST_NODE, &tmp);
-	tmp=dst_srv;
-	bundle_set_attr(bundlemem, DEST_SERV, &tmp);
+	if( bundle_initialize_bundle(bundlemem, dest, dst_srv, src_srv, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON)){
+	    /* Allocate bundle payload block */
+	    block = bundle_allocate_block(bundlemem, len, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
+	    if (block != NULL){
+	        /* Add payload */
+	        block->payload=*data;
+	        /* Add block to bundle */
+	        bundle_add_block(bundlemem, block);
+	    }
+	    return 1;
+	}
 
-	/* Source Service */
-	tmp=src_srv;
-	bundle_set_attr(bundlemem, SRC_SERV, &tmp);
-
-	/* Bundle flags */
-	tmp=BUNDLE_FLAG_SINGLETON;
-	bundle_set_attr(bundlemem, FLAGS, &tmp);
-
-	/* Bundle lifetime */
-	tmp=2000;
-	bundle_set_attr(bundlemem, LIFE_TIME, &tmp);
-
-	/* Bundle payload block */
-	bundle_add_block(bundlemem, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, data, len);
-
-	return bundlemem;
+	return 0;
 }
 
 PROCESS_THREAD(coordinator_process, ev, data)
@@ -196,7 +192,7 @@ PROCESS_THREAD(ping_process, ev, data)
 	/* Register our endpoint */
 	reg_ping.status = APP_ACTIVE;
 	reg_ping.application_process = PROCESS_CURRENT();
-	reg_ping.app_id = 5;
+	reg_ping.app_id = REG_PING_APP_ID;
 	process_post(&agent_process, dtn_application_registration_event, &reg_ping);
 
 	/* Wait a second */
@@ -231,9 +227,9 @@ PROCESS_THREAD(ping_process, ev, data)
 			}
 
 			PRINTF("PING: send sync\n");
-			bundlemem = bundle_convenience(CONF_DEST_NODE, 7, 5, userdata, PAYLOAD_LEN);
-			if (bundlemem)
-				process_post(&agent_process, dtn_send_bundle_event, (void *) bundlemem);
+			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)){
+				//FIXME alles ok
+			}
 
 		}
 
@@ -294,9 +290,7 @@ PROCESS_THREAD(ping_process, ev, data)
 			}
 
 			PRINTF("PING: send ping\n");
-			bundlemem = bundle_convenience(CONF_DEST_NODE, 7, 5, userdata, PAYLOAD_LEN);
-			if (bundlemem) {
-				process_post(&agent_process, dtn_send_bundle_event, (void *) bundlemem);
+			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)) {
 				bundle_sent++;
 			}
 		}
@@ -380,9 +374,9 @@ PROCESS_THREAD(pong_process, ev, data)
 
 		/* Send PONG */
 		PRINTF("PONG: send\n");
-		bundlemem = bundle_convenience(CONF_DEST_NODE, 5, 7, (uint8_t *) u32_ptr, 4);
-		if (bundlemem)
-			process_post(&agent_process, dtn_send_bundle_event, (void *) bundlemem);
+		if (bundle_convenience(CONF_DEST_NODE, REG_PING_APP_ID, REG_PONG_APP_ID, (uint8_t *) u32_ptr, 4)){
+		    //FIXME alles ok
+		}
 
 		bundle_sent++;
 		if (bundle_sent % 50 == 0)

@@ -263,7 +263,7 @@ void storage_coffee_prune()
 /**
  * \brief Sets the storage to its initial state
  */
-void storage_coffee_reinit(void)
+void storage_coffee_flush(void)
 {
 	// Remove all bundles from storage
 	while(bundles_in_storage > 0) {
@@ -675,16 +675,30 @@ struct storage_entry_t * storage_coffee_get_bundles(void)
 	return (struct storage_entry_t *) list_head(bundle_list);
 }
 
+uint8_t storage_coffee_housekeeping(uint16_t time){
+    return 1;
+}
+uint8_t storage_coffee_release_bundleslots(uint16_t size){
+    return 0;
+}
+uint8_t storage_coffee_add_segment_to_bundle(struct mmem *bundlemem, uint16_t min_size){
+    return 0;
+}
+
 const struct storage_driver storage_coffee = {
 	"STORAGE_COFFEE",
 	storage_coffee_init,
-	storage_coffee_reinit,
+	storage_coffee_flush,
+	storage_coffee_housekeeping,
+	storage_coffee_release_bundleslots,
 	storage_coffee_save_bundle,
-	storage_coffee_delete_bundle,
-	storage_coffee_read_bundle,
+	storage_coffee_add_segment_to_bundle,
+    storage_coffee_read_bundle,
+    storage_coffee_delete_bundle_by_bundle_number,
+    storage_coffee_delete_bundle_by_index_entry,
 	storage_coffee_get_free_space,
-	storage_coffee_get_bundle_numbers,
-	storage_coffee_get_bundles,
+    storage_coffee_get_bundle_count,
+    storage_coffee_get_index_block,
 };
 /** @} */
 /** @} */

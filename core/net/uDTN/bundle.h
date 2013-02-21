@@ -50,9 +50,6 @@
 
 /* Bundle Block Types */
 #define BUNDLE_BLOCK_TYPE_PAYLOAD		0x01
-#define BUNDLE_BLOCK_TYPE_SEGM_FIRST	0x02  //FIXME
-#define BUNDLE_BLOCK_TYPE_SEGM_MIDDLE	0x03
-#define BUNDLE_BLOCK_TYPE_SEGM_LAST 	0x04
 
 /* Bundle deletion reasons */
 #define REASON_NO_INFORMATION			0x00
@@ -111,9 +108,7 @@ struct bundle_block_t {
 	/* Variable array at the end to hold the payload
 	 * Size is uint8 despite being an SDNV because
 	 * IEEE-805.15.4 limits the size here. */
-    //FIXME größer machen...
 	uint8_t block_size;
-    //FIXME stattdessen pointer
 	uint8_t payload[];
 } __attribute__((packed));
 
@@ -146,20 +141,14 @@ struct bundle_t{
 	uint32_t frag_offs;
 	uint32_t app_len;
 
-	struct process * source_process;
+	struct process * source_process; //FIXME das brauchen wir nicht?
 	rimeaddr_t msrc;
 #if DEBUG_H
 	uint16_t debug_time;
 #endif
-	uint8_t num_blocks; //FIXME ist erst beim letzten segment bekannt, kommt daher in index?
+	uint8_t num_blocks; //FIXME kann weg
 
 	uint8_t block_data[];
-    //FIXME
-    //uint16_t num_segments
-    //uint8_t * first_segment
-    //FIXME
-    //uint16_t storage_offset
-    //uint16_t storage_next
 } __attribute__ ((packed));
 
 //FIXME

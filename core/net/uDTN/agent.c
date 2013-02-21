@@ -38,10 +38,10 @@
 
 #include "agent.h"
 
-static struct mmem * bundleptr;
-
-uint32_t dtn_node_id;
-uint32_t dtn_seq_nr;
+//FIXME das war nur für dtn_send_bundle_event?
+//static struct mmem * bundleptr;
+//uint32_t dtn_node_id;
+//uint32_t dtn_seq_nr;
 PROCESS(agent_process, "AGENT process");
 AUTOSTART_PROCESSES(&agent_process);
 
@@ -63,9 +63,10 @@ PROCESS_THREAD(agent_process, ev, data)
 
 	PROCESS_BEGIN();
 	
+	//FIXME das war nur für dtn_send_bundle_event?
 	/* We obtain our dtn_node_id from the RIME address of the node */
-	dtn_node_id = convert_rime_to_eid(&rimeaddr_node_addr);
-	dtn_seq_nr = 0;
+//	dtn_node_id = convert_rime_to_eid(&rimeaddr_node_addr);
+//	dtn_seq_nr = 0;
 	
 	/* We are initialized quite early - give Contiki some time to do its stuff */
 	process_poll(&agent_process);
@@ -131,98 +132,9 @@ PROCESS_THREAD(agent_process, ev, data)
 		}
 		
 		if(ev == dtn_send_bundle_event) {
-			uint8_t n = 0;
-			struct bundle_t * bundle = NULL;
-			struct process * source_process = NULL;
-			uint32_t bundle_flags = 0;
-
-			bundleptr = (struct mmem *) data;
-			if( bundleptr == NULL ) {
-				LOG(LOGD_DTN, LOG_AGENT, LOGL_ERR, "dtn_send_bundle_event with invalid pointer");
-				continue;
-			}
-
-			bundle = (struct bundle_t *) MMEM_PTR(bundleptr);
-			if( bundle == NULL ) {
-				LOG(LOGD_DTN, LOG_AGENT, LOGL_ERR, "dtn_send_bundle_event with invalid MMEM structure");
-				continue;
-			}
-
-			/* Go and find the process from which the bundle has been sent */
-			uint32_t app_id = registration_get_application_id(bundle->source_process);
-			if( app_id == 0xFFFF  && bundle->source_process != &agent_process) {
-				LOG(LOGD_DTN, LOG_AGENT, LOGL_ERR, "Unregistered process %s tries to send a bundle", PROCESS_NAME_STRING(bundle->source_process));
-				process_post(source_process, dtn_bundle_store_failed, NULL);
-				bundle_decrement(bundleptr);
-				continue;
-			}
-
-			/* Find out, if the source process has set an app id */
-			uint32_t service_app_id;
-			bundle_get_attr(bundleptr, SRC_SERV, &service_app_id);
-
-			/* If the service did not set an app id, do it now */
-			if( service_app_id == 0 ) {
-				bundle_set_attr(bundleptr, SRC_SERV, &app_id);
-			}
-
-			/* Set the source node */
-			bundle_set_attr(bundleptr, SRC_NODE, &dtn_node_id);
-
-			/* Check for report-to and set node and service accordingly */
-			bundle_get_attr(bundleptr, FLAGS, &bundle_flags);
-			if( bundle_flags & BUNDLE_FLAG_REPORT ) {
-				uint32_t report_to_node = 0;
-				bundle_get_attr(bundleptr, REP_NODE, &report_to_node);
-
-				if( report_to_node == 0 ) {
-					bundle_set_attr(bundleptr, REP_NODE, &dtn_node_id);
-				}
-
-				uint32_t report_to_service = 0;
-				bundle_get_attr(bundleptr, REP_SERV, &report_to_service);
-
-				if( report_to_service ) {
-					bundle_set_attr(bundleptr, REP_SERV, &app_id);
-				}
-			}
-
+			//FIXME das event wird nicht mehr gebraucht, funktionalität wurde aufgeteilt unter storage_*.c und bundle.c
+		    // momentan benutzt statusreport_basic_send das noch...
 			LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "dtn_send_bundle_event(%p) with seqNo %lu", bundleptr, dtn_seq_nr);
-
-			// Set the outgoing sequence number
-			bundle_set_attr(bundleptr, TIME_STAMP_SEQ_NR, &dtn_seq_nr);
-			dtn_seq_nr++;
-
-			// Copy the sending process, because 'bundle' will not be accessible anymore afterwards
-			source_process = bundle->source_process;
-
-			// Save the bundle in storage
-			n = BUNDLE_STORAGE.save_bundle(bundleptr, &bundle_number_ptr);
-
-			/* Saving the bundle failed... */
-			if( !n ) {
-				/* Decrement the sequence number */
-				dtn_seq_nr--;
-			}
-
-			// Reset our pointers to avoid using invalid ones
-			bundle = NULL;
-			bundleptr = NULL;
-
-			// Notify the sender process
-			if( n ) {
-				/* Bundle has been successfully saved, send event to service */
-				process_post(source_process, dtn_bundle_stored, NULL);
-			} else {
-				/* Bundle could not be saved, notify service */
-				process_post(source_process, dtn_bundle_store_failed, NULL);
-			}
-
-			// Now emulate the event to our agent
-			if( n ) {
-				data = (void *) bundle_number_ptr;
-				ev = dtn_bundle_in_storage_event;
-			}
 		}
 		
 		if(ev == dtn_send_admin_record_event) {
@@ -250,6 +162,7 @@ PROCESS_THREAD(agent_process, ev, data)
 			continue;
 		}
 		
+		//FIXME das schauen wir uns später nochmal an...
 	    if(ev == dtn_processing_finished) {
 	    	// data should contain the bundlemem ptr
 	    	struct mmem * bundlemem = (struct mmem *) data;
