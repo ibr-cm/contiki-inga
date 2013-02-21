@@ -78,7 +78,11 @@ struct storage_driver {
 	char *name;
 	/** called by agent a startup */
 	void (* init)(void);
-	void (* flush_storage)(void); //FIXME reinit ist unklar
+	void (* flush_storage)(void); //FIXME vorher reinit
+	/* Zusammenfassen zu agent_is_idle oder do_housekeeping ? */
+	void (* make_all_persistent)(void); //FIXME ist das wirklich notwendig?
+	void (* garbage_collect)(uint8_t time); //FIXME
+
 	/**
 	 * \brief puts bundle in storage, creates index entry
 	 * \param pointer to bundle struct
@@ -98,10 +102,11 @@ struct storage_driver {
      */
     uint8_t (* add_segment_to_bundle)(struct mmem *bundlemem, uint16_t min_size);
     /**
-     * \brief storage may never release bundleslots once they are allocated, this releases 1 bundleslot
+     * \brief storage may never release bundleslots once they are allocated, this trys to release bundleslots to get size bytes
+     * \param size in bytes
      * \return 0 on error, 1 on success
      */
-    uint8_t (* release_bundleslot)();
+    uint8_t (* release_mmem)(uint16_t size);
     /**
      * \brief deletes a bundle
      * \param BundleID, NULL if index entry != NULL
@@ -112,7 +117,8 @@ struct storage_driver {
      * marks bundle for garbage collection
      */
 	//FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden? (Stichwort: REASON_DELIVERED)
-	uint8_t (* del_bundle)(uint32_t *bundle_num, struct storage_index_entry_t *index_entry);
+	uint8_t (* del_bundle_by_bundle_number)(uint32_t *bundle_num);
+	uint8_t (* del_bundle_by_index_entry)(struct storage_index_entry_t *index_entry);
     /**
      * \brief reads a bundle
      * \param pointer to BundleID
