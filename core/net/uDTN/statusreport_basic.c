@@ -11,7 +11,8 @@
 /**
  * \file
  * \author Georg von Zengen <vonzeng@ibr.cs.tu-bs.de>
- * \author Wolf-Bastian Pšttner <poettner@ibr.cs.tu-bs.de>
+ * \author Wolf-Bastian Pï¿½ttner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <string.h>
@@ -230,8 +231,8 @@ uint8_t statusreport_basic_send(struct mmem * bundlemem, uint8_t status, uint8_t
 	bundle->source_process = &agent_process;
 
 	// Set destination addresses for the outgoing bundle
-	bundle_set_attr(report_bundle, DEST_NODE, &report_node_id);
-	bundle_set_attr(report_bundle, DEST_SERV, &report_service_id);
+	//bundle_set_attr(report_bundle, DEST_NODE, &report_node_id);
+	//bundle_set_attr(report_bundle, DEST_SERV, &report_service_id);
 
 	// Copy timestamp from incoming bundle
 	bundle_set_attr(report_bundle, TIME_STAMP, &report.bundle_creation_timestamp);
@@ -240,26 +241,42 @@ uint8_t statusreport_basic_send(struct mmem * bundlemem, uint8_t status, uint8_t
 
 	// Set lifetime
 	lifetime = 3600;
-	bundle_set_attr(report_bundle, LIFE_TIME, &lifetime);
+	//bundle_set_attr(report_bundle, LIFE_TIME, &lifetime);
 
 	// Make the outgoing bundle an admin record
 	flags = BUNDLE_FLAG_ADM_REC;
-	bundle_set_attr(report_bundle, FLAGS, &flags);
+	//bundle_set_attr(report_bundle, FLAGS, &flags);
 
-	// Encode status report
-	ret = statusreport_encode(&report, buffer, BUFFER_LENGTH);
-	if( ret < 0 )
-		return -1;
+    //FIXME
+    if(bundle_initialize_bundle(bundlemem, report_node_id, report_service_id, report.source_eid_service, lifetime, flags)){
 
-	// Add status report to bundle
-	ret = bundle_add_block(report_bundle, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, buffer, ret);
-	if( ret < 0 )
-		return -1;
+        // Encode status report
+        ret = statusreport_encode(&report, buffer, BUFFER_LENGTH);
+        if( ret < 0 )
+            return -1;
 
-	// Send out the report
-	process_post(&agent_process, dtn_send_bundle_event, report_bundle);
+        // Add status report to bundle
 
-	return 1;
+        /* Allocate bundle payload block */
+        struct bundle_block_t *block;
+        block = bundle_allocate_block(report_bundle, ret, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
+        if (block != NULL){
+            /* Add payload */
+            memcpy(block->payload, buffer, ret);
+            //block->payload=*buffer;  //FIXME das wird so nicht funktionieren...
+            /* Add block to bundle */
+            bundle_add_block(bundlemem, block);
+        }
+
+        if( ret < 0 )
+            return -1;
+
+        // Send out the report
+        process_post(&agent_process, dtn_send_bundle_event, report_bundle);
+
+        return 1;
+    }
+    return 0;
 }
 
 const struct status_report_driver statusreport_basic = {

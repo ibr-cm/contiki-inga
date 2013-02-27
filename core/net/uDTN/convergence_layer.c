@@ -9,6 +9,7 @@
  * \brief IEEE 802.15.4 Convergence Layer Implementation
  * \author Georg von Zengen <vonzeng@ibr.cs.tu-bs.de>
  * \author Wolf-Bastian Poettner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <string.h> // memset
@@ -204,7 +205,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 
 	/* Read the bundle from storage, if it is not in memory */
 	if( ticket->bundle == NULL ) {
-		ticket->bundle = BUNDLE_STORAGE.read_bundle(ticket->bundle_number);
+		ticket->bundle = BUNDLE_STORAGE.read_bundle(ticket->bundle_number,0,0); //FIXME
 		if( ticket->bundle == NULL ) {
 			LOG(LOGD_DTN, LOG_CL, LOGL_ERR, "Unable to read bundle %lu", ticket->bundle_number);
 			/* FIXME: Notify somebody */
@@ -230,7 +231,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 
 		//FIXME warum nicht hier report senden?
 		/* Tell storage to delete - it will take care of the rest */
-		BUNDLE_STORAGE.del_bundle(ticket->bundle_number, REASON_LIFETIME_EXPIRED);
+		BUNDLE_STORAGE.del_bundle_by_bundle_number(ticket->bundle_number);
 
 		return -1;
 	}

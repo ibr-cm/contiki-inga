@@ -31,10 +31,9 @@
  */
 
 /**
- * \file
- *         A uDTN ping-pong example testing end-to-end latency
- * \author
- *         Daniel Willmann <daniel@totalueberwachung.de>
+ * \file   A uDTN ping-pong example testing end-to-end latency
+ * \author Daniel Willmann <daniel@totalueberwachung.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <stdio.h>
@@ -110,7 +109,7 @@ static clock_time_t get_time()
 }
 
 /* Convenience function to populate a bundle */
-static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16_t src_srv,  uint8_t *data, size_t len)
+static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16_t src_srv,  uint8_t *data, uint16_t len)
 {
 	struct mmem *bundlemem;
 	struct bundle_block_t *block;
@@ -126,7 +125,8 @@ static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16
 	    block = bundle_allocate_block(bundlemem, len, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
 	    if (block != NULL){
 	        /* Add payload */
-	        block->payload=*data;
+	        memcpy(block->payload, data, len);
+	        //block->payload=*data;
 	        /* Add block to bundle */
 	        bundle_add_block(bundlemem, block);
 	    }

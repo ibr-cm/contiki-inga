@@ -16,6 +16,7 @@
  * \author Georg von Zengen (vonzeng@ibr.cs.tu-bs.de) 
  * \author Daniel Willmann <daniel@totalueberwachung.de>
  * \author Wolf-Bastian Poettner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <stdint.h>
@@ -213,8 +214,12 @@ uint16_t bundle_delete_bundle(struct mmem * bundlemem);
  * \param d_len length of the block payload
  * \return 1 on success or 0 on error
  */
-int bundle_add_block(struct mmem * bundlemem, uint8_t type, uint8_t flags, uint8_t * data, uint8_t d_len);
-
+//int bundle_add_block(struct mmem * bundlemem, uint8_t type, uint8_t flags, uint8_t * data, uint8_t d_len);
+//FIXME
+uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint32_t dest, uint32_t dst_srv, uint32_t src_srv, uint32_t lifetime, uint32_t bundle_flags);
+struct bundle_block_t *bundle_allocate_block(struct mmem *bundlemem, uint16_t size, uint8_t type, uint8_t flags);
+uint8_t bundle_add_block(struct mmem *bundlemem, struct bundle_block_t *block);
+uint32_t bundle_calculate_bundle_number(uint32_t tstamp_seq, uint32_t tstamp, uint32_t src_node, uint32_t frag_offs, uint32_t app_len);
 /**
  * \brief Returns a pointer a bundle block
  * \param bundlemem MMEM allocation of the bundle

@@ -28,6 +28,11 @@
 #include "bundle.h"
 #include "bundleslot.h"  //FIXME ist das notwendig?
 
+#define STORAGE_FIRST_SEGMENT 0x01
+#define STORAGE_SEGMENT       0x02
+#define STORAGE_LAST_SEGMENT  0x03
+#define STORAGE_NO_SEGMENT    0x04
+
 /**
  * Which storage driver are we going to use?
  * Default is RAM
@@ -107,7 +112,7 @@ struct storage_driver {
 	/**
 	 * \brief puts bundle in storage, creates index entry
 	 * \param pointer to bundle struct
-     * \param segmentation flag: FIRST_SEGMENT, SEGMENT, LAST_SEGMENT, NO_SEGMENT
+     * \param segmentation flag: STORAGE_FIRST_SEGMENT, STORAGE_SEGMENT, STORAGE_LAST_SEGMENT, STORAGE_NO_SEGMENT
      * \return 0 on error, 1 on success
 	 *
 	 * creates events: dtn_bundle_stored, dtn_bundle_in_storage_event, dtn_bundle_store_failed, ...  //FIXME
@@ -130,7 +135,7 @@ struct storage_driver {
      * marks bundle for garbage collection
      */
 	//FIXME sollte Statusreport nicht besser vom Aufrufer verschickt werden? (Stichwort: REASON_DELIVERED)
-	uint8_t (* del_bundle_by_bundle_number)(uint32_t *bundle_num);
+	uint8_t (* del_bundle_by_bundle_number)(uint32_t bundle_num);
     /**
      * \brief deletes a bundle
      * \param pointer to index entry
@@ -153,7 +158,7 @@ struct storage_driver {
 	//FIXME storage muss sich merken: block_data_start_offset,
 	                                //länge des belegten speicherplatzes in block_data
 	                                //cache flags
-	struct mmem *(* read_bundle)(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length);
+	struct mmem *(* read_bundle)(uint32_t bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length);
     /**
      * \brief returns number of free bundle slots in storage, multiply with DATA_BLOCK_SIZE for Bytes
      * \return number of free bundle slots in storage

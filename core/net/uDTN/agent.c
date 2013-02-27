@@ -8,6 +8,7 @@
  * \author Georg von Zengen <vonzeng@ibr.cs.tu-bs.de>
  * \author Daniel Willmann <daniel@totalueberwachung.de>
  * \author Wolf-Bastian Poettner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
  
 #include <stdlib.h>
@@ -40,8 +41,8 @@
 
 //FIXME das war nur für dtn_send_bundle_event?
 //static struct mmem * bundleptr;
-//uint32_t dtn_node_id;
-//uint32_t dtn_seq_nr;
+uint32_t dtn_node_id;
+uint32_t dtn_seq_nr;
 PROCESS(agent_process, "AGENT process");
 AUTOSTART_PROCESSES(&agent_process);
 
@@ -65,8 +66,8 @@ PROCESS_THREAD(agent_process, ev, data)
 	
 	//FIXME das war nur für dtn_send_bundle_event?
 	/* We obtain our dtn_node_id from the RIME address of the node */
-//	dtn_node_id = convert_rime_to_eid(&rimeaddr_node_addr);
-//	dtn_seq_nr = 0;
+	dtn_node_id = convert_rime_to_eid(&rimeaddr_node_addr);
+	dtn_seq_nr = 0;
 	
 	/* We are initialized quite early - give Contiki some time to do its stuff */
 	process_poll(&agent_process);
@@ -149,6 +150,7 @@ PROCESS_THREAD(agent_process, ev, data)
 			continue;
 		}
 
+		//FIXME warum nicht in storage aufrufen?
 		if(ev == dtn_bundle_in_storage_event){
 			uint32_t * bundle_number = (uint32_t *) data;
 

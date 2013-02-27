@@ -11,6 +11,7 @@
  * \author Georg von Zengen (vonzeng@ibr.cs.tu-bs.de)
  * \author Daniel Willmann <daniel@totalueberwachung.de>
  * \author Wolf-Bastian Poettner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <stdlib.h>
@@ -26,11 +27,10 @@
 #include "bundleslot.h"
 #include "agent.h"
 #include "hash.h"
+#include "storage.h"
+#include "registration.h"
 
 #include "bundle.h"
-
-static uint32_t dtn_node_id = convert_rime_to_eid(&rimeaddr_node_addr);
-static uint32_t dtn_seq_nr = 0;
 
 /**
  * "Internal" functions
@@ -39,7 +39,7 @@ static uint8_t bundle_decode_block(struct mmem *bundlemem, uint8_t *buffer, int 
 static int bundle_encode_block(struct bundle_block_t *block, uint8_t *buffer, uint8_t max_len);
 
 //FIXME pointer?
-uint32_t calculate_bundle_number(uint32_t tstamp_seq, uint32_t tstamp, uint32_t src_node, uint32_t frag_offs, uint32_t app_len){
+uint32_t bundle_calculate_bundle_number(uint32_t tstamp_seq, uint32_t tstamp, uint32_t src_node, uint32_t frag_offs, uint32_t app_len){
     return HASH.hash_convenience(tstamp_seq, tstamp, src_node, frag_offs, app_len);
 }
 
@@ -74,7 +74,7 @@ struct mmem * bundle_create_bundle()
 	return &bs->bundle;
 }
 
-uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint16_t dest, uint16_t dst_srv, uint16_t src_srv, uint32_t lifetime, uint32_t bundle_flags){
+uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint32_t dest, uint32_t dst_srv, uint32_t src_srv, uint32_t lifetime, uint32_t bundle_flags){
     struct bundle_t * bundle = NULL;
 
     bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
@@ -84,7 +84,8 @@ uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint16_t dest, uint16_t
     }
 
     /* Go and find the process from which the bundle has been sent */ //FIXME wird evtl. noch an anderer stelle benötigt?
-    if( registration_get_application_id(src_srv) == 0xFFFF && bundle->source_process != &agent_process) {
+    if(registration_return_status(src_srv, dtn_node_id) == -1 && bundle->source_process != &agent_process) {
+//    if( registration_get_application_id(src_srv) == 0xFFFF && bundle->source_process != &agent_process) {
         LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Unregistered process %d tries to send a bundle", src_srv);
         bundle_decrement(bundlemem);
         return 0;
@@ -105,27 +106,28 @@ uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint16_t dest, uint16_t
     //bundle->frag_offs = 0;
     //bundle->app_len = 0;
 
-    /* calculate & set bundle_num*/
-    bundle->bundle_num = calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
-    //FIXME nach statusreport_basic_send verschieben?
+    //FIXME aus agent.c
     /* Check for report-to and set node and service accordingly */
-//    bundle_get_attr(bundlemem, FLAGS, &bundle_flags);
-//    if( bundle_flags & BUNDLE_FLAG_REPORT ) {
-//        uint32_t report_to_node = 0;
-//        bundle_get_attr(bundlemem, REP_NODE, &report_to_node);
-//
-//        if( report_to_node == 0 ) {
-//            bundle_set_attr(bundlemem, REP_NODE, &dtn_node_id);
-//        }
-//
-//        uint32_t report_to_service = 0;
-//        bundle_get_attr(bundlemem, REP_SERV, &report_to_service);
-//
-//        if( report_to_service ) {
-//            bundle_set_attr(bundlemem, REP_SERV, &app_id);
-//        }
-//    }
+    bundle_get_attr(bundlemem, FLAGS, &bundle_flags);
+    if( bundle_flags & BUNDLE_FLAG_REPORT ) {
+        uint32_t report_to_node = 0;
+        bundle_get_attr(bundlemem, REP_NODE, &report_to_node);
+
+        if( report_to_node == 0 ) {
+            bundle_set_attr(bundlemem, REP_NODE, &dtn_node_id);
+        }
+
+        uint32_t report_to_service = 0;
+        bundle_get_attr(bundlemem, REP_SERV, &report_to_service);
+
+        if( report_to_service ) {
+            bundle_set_attr(bundlemem, REP_SERV, &src_srv);
+        }
+    }
+
+    /* calculate & set bundle_num*/
+    bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
     return 1;
 }
@@ -174,17 +176,18 @@ struct bundle_block_t *bundle_allocate_block(struct mmem *bundlemem, uint16_t si
 
 uint8_t bundle_add_block(struct mmem *bundlemem, struct bundle_block_t *block)
 {
+    uint8_t n = 0;
     //FIXME das übergeben des blocks ist nicht erforderlich? fühlt sich aber besser an...
 
     //FIXME
     // Save the bundle in storage
-    //n = BUNDLE_STORAGE.save_bundle(bundlemem, &bundle_number_ptr);
+    n = BUNDLE_STORAGE.save_bundle(bundlemem, STORAGE_NO_SEGMENT);
 
     /* Saving the bundle failed... */
-//    if( !n ) {
-//        /* Decrement the sequence number */
-//        dtn_seq_nr--;
-//    }
+    if( !n ) {
+        /* Decrement the sequence number */
+        dtn_seq_nr--;
+    }
 	return 1;
 }
 

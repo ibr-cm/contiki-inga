@@ -14,6 +14,7 @@
  * \author Georg von Zengen <vonzeng@ibr.cs.tu-bs.de>
  * \author Daniel Willmann <daniel@totalueberwachung.de>
  * \author Wolf-Bastian Poettner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <stdlib.h>
@@ -216,12 +217,11 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
  * \return 0 on error, 1 on success
  */
 //FIXME uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
-uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_number_ptr)
+uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 {
 	struct bundle_t *entrybdl = NULL,
 					*bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
-	uint32_t bundle_number = 0;
 
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "storage_mmem_save_bundle with invalid pointer %p", bundlemem);
@@ -236,18 +236,14 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_num
 		return 0;
 	}
 
-	// Calculate the bundle number
-	bundle_number = calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
-
 	// Look for duplicates in the storage
 	for(entry = list_head(bundle_list);
 		entry != NULL;
 		entry = list_item_next(entry)) {
 		entrybdl = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
-		if( bundle_number == entrybdl->bundle_num ) {
+		if( bundle->bundle_num == entrybdl->bundle_num ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "%lu is the same bundle", entry->bundle_num);
-			*bundle_number_ptr = &entry->bundle_num;
 			bundle_decrement(bundlemem);
 			return 1;
 		}
@@ -276,10 +272,6 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_num
 	bundle_increment(bundlemem);
 	bundles_in_storage++;
 
-	// Set all required fields
-	bundle->bundle_num = bundle_number;
-	entry->bundle_num = bundle_number;
-
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "New Bundle %lu (%lu), Src %lu, Dest %lu, Seq %lu", bundle->bundle_num, entry->bundle_num, bundle->src_node, bundle->dst_node, bundle->tstamp_seq);
 
 	// Notify the statistics module
@@ -292,21 +284,16 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint32_t ** bundle_num
 	// This should do nothing, as we have incremented the reference counter before
 	bundle_decrement(bundlemem);
 
-	// Now copy over the STATIC pointer to the bundle number, so that
-	// the caller can stick it into an event
-	*bundle_number_ptr = &entry->bundle_num;
-
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
-//    if( n ) {
-//        data = (void *) bundle_number_ptr;
-//        ev = dtn_bundle_in_storage_event;
-//    }
+    if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
+        process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
+    }
 
 	return 1;
 }
 
 uint8_t storage_mmem_delete_bundle_by_index_entry(struct bundle_index_entry_t *index_entry){
-    storage_mmem_delete_bundle_by_bundle_number(&(*index_entry->bundle_num)); //FIXME oder so
+    storage_mmem_delete_bundle_by_bundle_number(&index_entry->bundle_num); //FIXME oder so
     //FIXME indexeintrag löschen
     return 1;
 }
@@ -382,7 +369,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t *bundle_number)
  * \return pointer to the MMEM struct, NULL on error
  */
 //FIXME struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length){
-struct mmem *storage_mmem_read_bundle(uint32_t bundle_num)
+struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length)
 {
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle = NULL;
@@ -393,7 +380,7 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num)
 			entry = list_item_next(entry)) {
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
-		if( bundle->bundle_num == bundle_num ) {
+		if( bundle->bundle_num == *bundle_num ) {
 			break;
 		}
 	}

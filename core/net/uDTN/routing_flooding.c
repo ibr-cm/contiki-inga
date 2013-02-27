@@ -233,7 +233,7 @@ int routing_flooding_send_to_local(struct routing_entry_t * entry)
 
 	// Should this bundle be delivered locally?
 	if( (entry->flags & ROUTING_FLAG_LOCAL) && !(entry->flags & ROUTING_FLAG_IN_DELIVERY) ) {
-		bundlemem = BUNDLE_STORAGE.read_bundle(entry->bundle_number);
+		bundlemem = BUNDLE_STORAGE.read_bundle(entry->bundle_number,0,0);
 		if( bundlemem == NULL ) {
 			LOG(LOGD_DTN, LOG_ROUTE, LOGL_ERR, "cannot read bundle %lu", entry->bundle_number);
 			return FLOOD_ROUTE_RETURN_CONTINUE;
@@ -461,7 +461,7 @@ void routing_flooding_check_keep_bundle(uint32_t bundle_number) {
 	}
 
 	LOG(LOGD_DTN, LOG_ROUTE, LOGL_INF, "Deleting bundle %lu", bundle_number);
-	BUNDLE_STORAGE.del_bundle(bundle_number, REASON_DELIVERED);
+	BUNDLE_STORAGE.del_bundle_by_bundle_number(bundle_number);
 }
 
 /**
@@ -511,7 +511,7 @@ int routing_flooding_new_bundle(uint32_t * bundle_number)
 	}
 
 	// Now go and request the bundle from storage
-	bundlemem = BUNDLE_STORAGE.read_bundle(*bundle_number);
+	bundlemem = BUNDLE_STORAGE.read_bundle(bundle_number,0,0);
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_ROUTE, LOGL_ERR, "unable to read bundle %lu", *bundle_number);
 		mmem_free(&n->entry);

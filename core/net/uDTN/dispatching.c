@@ -8,6 +8,7 @@
  * \author Georg von Zengen <vonzeng@ibr.cs.tu-bs.de>
  * \author Daniel Willmann <daniel@totalueberwachung.de>
  * \author Wolf-Bastian Poettner <poettner@ibr.cs.tu-bs.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #include <stdint.h>
@@ -76,14 +77,14 @@ int dispatching_check_report(struct mmem * bundlemem) {
 		return -1;
 	}
 
-	//FIXME doch get_bundle_id fkt?
+	//FIXME
 	/* Calculate bundle number */
-	bundle_number = HASH.hash_convenience(report.bundle_sequence_number, report.bundle_creation_timestamp, report.source_eid_node, report.fragment_offset, report.fragment_length);
+	bundle_number = bundle_calculate_bundle_number(report.bundle_sequence_number, report.bundle_creation_timestamp, report.source_eid_node, report.fragment_offset, report.fragment_length);
 
 	LOG(LOGD_DTN, LOG_AGENT, LOGL_INF, "Received delivery report for bundle %lu from ipn:%lu, deleting", bundle_number, bundle->src_node);
 
 	/* And delete the bundle without sending additional reports */
-	BUNDLE_STORAGE.del_bundle(bundle_number, REASON_DELIVERED);
+	BUNDLE_STORAGE.del_bundle_by_bundle_number(bundle_number);
 
 	return 1;
 }
@@ -158,13 +159,13 @@ int dispatching_dispatch_bundle(struct mmem *bundlemem) {
 
 	// regular bundle, no custody
 	LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "Handing over to storage");
-	n = BUNDLE_STORAGE.save_bundle(bundlemem, &bundle_number);
+	n = BUNDLE_STORAGE.save_bundle(bundlemem, STORAGE_NO_SEGMENT); //FIXME
 	bundlemem = NULL;
 
 	// Send out a "received" status report if requested
 	if( received_report ) { //FIXME && SEGM_FLAGS == ONLY_ONE/LAST, sicherstellen, dass bundlemem lange genug im RAM ist
 		// Read back from storage
-		bundlemem = BUNDLE_STORAGE.read_bundle(*bundle_number);
+		bundlemem = BUNDLE_STORAGE.read_bundle(*bundle_number,0,0);
 
 		if( bundlemem != NULL) {
 			LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "Sending out delivery report for bundle %lu", *bundle_number);

@@ -8,6 +8,7 @@
  * \brief Header for Bundle Slot memory management
  *
  * \author Daniel Willmann <daniel@totalueberwachung.de>
+ * \author Julian Heinbokel <j.heinbokel@tu-bs.de>
  */
 
 #ifndef __BUNDLESLOT_H__
