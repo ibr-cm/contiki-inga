@@ -64,7 +64,6 @@ PROCESS_THREAD(agent_process, ev, data)
 
 	PROCESS_BEGIN();
 	
-	//FIXME das war nur für dtn_send_bundle_event?
 	/* We obtain our dtn_node_id from the RIME address of the node */
 	dtn_node_id = convert_rime_to_eid(&rimeaddr_node_addr);
 	dtn_seq_nr = 0;

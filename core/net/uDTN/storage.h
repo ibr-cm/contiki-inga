@@ -43,7 +43,6 @@
 #define BUNDLE_STORAGE storage_mmem
 #endif
 
-//FIXME obsolete, use BUNDLE_NUM instead
 /**
  * How many bundles can possibly be stored in the data structures?
  */
@@ -73,6 +72,15 @@ struct bundle_index_entry_t { //FIXME nach bundle.h
     
     /** Destination node of the bundle */
     uint32_t dst_node;
+};
+
+//FIXME
+struct storage_entry_t {
+       /** pointer to the next list element */
+       struct storage_entry_t * next;
+
+       /** Internal number of the bundle */
+       uint32_t bundle_num;
 };
 
 /** storage module interface  */

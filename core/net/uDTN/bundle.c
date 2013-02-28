@@ -38,7 +38,6 @@
 static uint8_t bundle_decode_block(struct mmem *bundlemem, uint8_t *buffer, int max_len);
 static int bundle_encode_block(struct bundle_block_t *block, uint8_t *buffer, uint8_t max_len);
 
-//FIXME pointer?
 uint32_t bundle_calculate_bundle_number(uint32_t tstamp_seq, uint32_t tstamp, uint32_t src_node, uint32_t frag_offs, uint32_t app_len){
     return HASH.hash_convenience(tstamp_seq, tstamp, src_node, frag_offs, app_len);
 }
@@ -57,8 +56,8 @@ struct mmem * bundle_create_bundle()
 	}
 
     //FIXME
-	//ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
-    ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
+	ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
+    //ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
 	if (!ret) {
 		bundleslot_free(bs);
 		LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate memory for a bundle");

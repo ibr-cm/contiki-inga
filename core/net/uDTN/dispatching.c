@@ -91,7 +91,7 @@ int dispatching_check_report(struct mmem * bundlemem) {
 
 int dispatching_dispatch_bundle(struct mmem *bundlemem) {
 	struct bundle_t *bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
-	uint32_t * bundle_number;
+	uint32_t * bundle_number = &bundle->bundle_num;  //FIXME
 	int n;
 	uint8_t received_report = 0;
 

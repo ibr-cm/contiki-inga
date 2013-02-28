@@ -340,7 +340,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 
 	//FIXME das auch
 	// Notified the agent, that a bundle has been deleted
-	//agent_delete_bundle(bundle_number);
+	agent_delete_bundle(bundle_number);
 
 	//FIXME slot trotzdem belegen, evtl. "valid"-flag
 	bundle_decrement(entry->bundle);
@@ -367,7 +367,6 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
  * \param bundle_num bundle number to read
  * \return pointer to the MMEM struct, NULL on error
  */
-//FIXME struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length){
 struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length)
 {
 	struct bundle_list_entry_t * entry = NULL;
