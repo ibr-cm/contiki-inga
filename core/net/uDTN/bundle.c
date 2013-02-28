@@ -74,21 +74,21 @@ struct mmem * bundle_create_bundle()
 	return &bs->bundle;
 }
 
-uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint32_t dest, uint32_t dst_srv, uint32_t src_srv, uint32_t lifetime, uint32_t bundle_flags){
-    struct bundle_t * bundle = NULL;
+struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_srv, uint32_t lifetime, uint32_t bundle_flags){
+    struct mmem *bundlemem;
+    struct bundle_t *bundle;
+    bundlemem = bundle_create_bundle();
+    if (!bundlemem)
+        return NULL;
 
     bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
-    if( bundle == NULL ) {
-        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "bundle_initialize_bundle with invalid MMEM structure");
-        return 0;
-    }
 
     /* Go and find the process from which the bundle has been sent */ //FIXME wird evtl. noch an anderer stelle benötigt?
     if(registration_return_status(src_srv, dtn_node_id) == -1 && bundle->source_process != &agent_process) {
 //    if( registration_get_application_id(src_srv) == 0xFFFF && bundle->source_process != &agent_process) {
         LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Unregistered process %d tries to send a bundle", src_srv);
         bundle_decrement(bundlemem);
-        return 0;
+        return NULL;
     }
 
     /* Set the source node, source service, destination node, destination service */
@@ -129,7 +129,7 @@ uint8_t bundle_initialize_bundle(struct mmem *bundlemem, uint32_t dest, uint32_t
     /* calculate & set bundle_num*/
     bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
-    return 1;
+    return bundlemem;
 }
 
 struct bundle_block_t *bundle_allocate_block(struct mmem *bundlemem, uint16_t size, uint8_t type, uint8_t flags)
@@ -149,7 +149,7 @@ struct bundle_block_t *bundle_allocate_block(struct mmem *bundlemem, uint16_t si
 
     return block;
 
-    //FIXME je nach durchlauf muss an die passende stelle geprungen werden, mehr platz alloziert werden
+    //FIXME je nach durchlauf muss an die passende stelle gesprungen werden, mehr platz alloziert werden
 
     //FIXME aus alter bundle_add_block-Fkt
 //    struct bundle_t *bundle;
@@ -351,7 +351,7 @@ struct mmem *bundle_recover_bundle(uint8_t *buffer, int size)
 	uint8_t offs = 0;
 	struct mmem *bundlemem;
 	struct bundle_t *bundle;
-	bundlemem = bundle_create_bundle(); //FIXME das machen wir in zukunft ausserhalb
+	bundlemem = bundle_create_bundle();
 	if (!bundlemem)
 		return NULL;
 
@@ -420,6 +420,9 @@ struct mmem *bundle_recover_bundle(uint8_t *buffer, int size)
 		LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Problem decoding the primary bundle block.");
 		goto err;
 	}
+
+	/* calculate & set bundle_num*/
+	bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
 	/* FIXME: Loop around and decode all blocks - does this work? */
 	while (size-offs > 1) {

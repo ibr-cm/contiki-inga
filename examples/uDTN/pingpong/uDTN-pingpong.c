@@ -114,26 +114,22 @@ static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16
 	struct mmem *bundlemem;
 	struct bundle_block_t *block;
 
-	bundlemem = bundle_create_bundle();
+	bundlemem = bundle_new_bundle(dest, dst_srv, src_srv, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 	if (!bundlemem) {
 		printf("create_bundle failed\n");
 		return 0;
 	}
 
-	if( bundle_initialize_bundle(bundlemem, dest, dst_srv, src_srv, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON)){
-	    /* Allocate bundle payload block */
-	    block = bundle_allocate_block(bundlemem, len, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
-	    if (block != NULL){
-	        /* Add payload */
-	        memcpy(block->payload, data, len);
-	        //block->payload=*data;
-	        /* Add block to bundle */
-	        bundle_add_block(bundlemem, block);
-	    }
-	    return 1;
-	}
-
-	return 0;
+    /* Allocate bundle payload block */
+    block = bundle_allocate_block(bundlemem, len, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
+    if (block != NULL){
+        /* Add payload */
+        memcpy(block->payload, data, len);
+        //block->payload=*data;
+        /* Add block to bundle */
+        bundle_add_block(bundlemem, block);
+    }
+    return 1;
 }
 
 PROCESS_THREAD(coordinator_process, ev, data)
@@ -179,7 +175,7 @@ PROCESS_THREAD(ping_process, ev, data)
 	static uint32_t diff = 0, latency = 0;
 	static uint8_t synced = 0;
 	static struct etimer timer;
-	struct mmem *bundlemem, *recv;
+	struct mmem *recv;
 	struct bundle_block_t *block;
 	static struct registration_api reg_ping;
 	uint8_t i;
@@ -307,7 +303,7 @@ PROCESS_THREAD(pong_process, ev, data)
 {
 	static struct etimer timer;
 	static uint16_t bundle_sent = 0;
-	struct mmem *bundlemem, *recv;
+	struct mmem *recv;
 	struct bundle_block_t *block;
 	static struct registration_api reg_pong;
 	uint32_t *u32_ptr, tmp;

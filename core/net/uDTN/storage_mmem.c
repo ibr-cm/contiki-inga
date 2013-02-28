@@ -74,7 +74,7 @@ static struct ctimer r_store_timer;
  */
 void storage_mmem_prune();
 uint8_t storage_mmem_flush(void);
-uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t *bundle_number);
+uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number);
 void storage_mmem_update_statistics();
 
 /**
@@ -129,7 +129,7 @@ void storage_mmem_prune()
 
 		if( bundle->lifetime < elapsed_time ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "bundle lifetime expired of bundle %lu", entry->bundle_num);
-			storage_mmem_delete_bundle_by_bundle_number(&bundle->bundle_num);
+			storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
 		}
 	}
 
@@ -150,7 +150,7 @@ uint8_t storage_mmem_flush(void)
 			entry = list_item_next(entry)) {
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
-		storage_mmem_delete_bundle_by_bundle_number(&bundle->bundle_num);
+		storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
 	}
 	//FIXME delete index blocks
 
@@ -204,7 +204,7 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 		}
 
 		/* Delete Bundle */
-		storage_mmem_delete_bundle_by_bundle_number(&entry->bundle_num);
+		storage_mmem_delete_bundle_by_bundle_number(entry->bundle_num);
 	}
 
 	return 1;
@@ -216,7 +216,6 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
  * \param bundle_number_ptr pointer where the bundle number will be stored (on success)
  * \return 0 on error, 1 on success
  */
-//FIXME uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 {
 	struct bundle_t *entrybdl = NULL,
@@ -293,7 +292,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 }
 
 uint8_t storage_mmem_delete_bundle_by_index_entry(struct bundle_index_entry_t *index_entry){
-    storage_mmem_delete_bundle_by_bundle_number(&index_entry->bundle_num); //FIXME oder so
+    storage_mmem_delete_bundle_by_bundle_number(index_entry->bundle_num); //FIXME oder so
     //FIXME indexeintrag löschen
     return 1;
 }
@@ -303,12 +302,12 @@ uint8_t storage_mmem_delete_bundle_by_index_entry(struct bundle_index_entry_t *i
  * \param reason reason code
  * \return 1 on success or 0 on error
  */
-uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t *bundle_number)
+uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 {
 	struct bundle_t * bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
 
-	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "Deleting Bundle %lu", *bundle_number);
+	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "Deleting Bundle %lu", bundle_number);
 
 	// Look for the bundle we are talking about
 	for(entry = list_head(bundle_list);
@@ -316,13 +315,13 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t *bundle_number)
 		entry = list_item_next(entry)) {
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
-		if( bundle->bundle_num == *bundle_number ) {
+		if( bundle->bundle_num == bundle_number ) {
 			break;
 		}
 	}
 
 	if( entry == NULL ) {
-		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "Could not find bundle %lu on storage_mmem_delete_bundle", *bundle_number);
+		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "Could not find bundle %lu on storage_mmem_delete_bundle", bundle_number);
 		return 0;
 	}
 
@@ -341,7 +340,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t *bundle_number)
 
 	//FIXME das auch
 	// Notified the agent, that a bundle has been deleted
-	//agent_delete_bundle(*bundle_number);
+	//agent_delete_bundle(bundle_number);
 
 	//FIXME slot trotzdem belegen, evtl. "valid"-flag
 	bundle_decrement(entry->bundle);
@@ -369,7 +368,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t *bundle_number)
  * \return pointer to the MMEM struct, NULL on error
  */
 //FIXME struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length){
-struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length)
+struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length)
 {
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle = NULL;
@@ -380,7 +379,7 @@ struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_
 			entry = list_item_next(entry)) {
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
-		if( bundle->bundle_num == *bundle_num ) {
+		if( bundle->bundle_num == bundle_num ) {
 			break;
 		}
 	}
@@ -418,7 +417,7 @@ struct mmem *storage_mmem_read_bundle(uint32_t *bundle_num, uint32_t block_data_
  * \param bundlemem pointer to a bundle struct (not used here)
  * \return number of free slots
  */
-uint16_t storage_mmem_get_free_space(struct mmem * bundlemem)
+uint32_t storage_mmem_get_free_space()
 {
 	return BUNDLE_STORAGE_SIZE - bundles_in_storage;
 }
@@ -435,7 +434,7 @@ uint16_t storage_mmem_get_bundle_count(void){
  * \brief Get the bundle list
  * \returns pointer to first bundle list entry
  */
-struct storage_entry_t * storage_mmem_get_index_block(uint8_t blocknr)
+struct mmem *storage_mmem_get_index_block(uint8_t blocknr)
 {
     //FIXME for 0 to BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS ...
 	return (struct storage_entry_t *) list_head(bundle_list);
@@ -459,9 +458,9 @@ const struct storage_driver storage_mmem = {
     storage_mmem_release_bundleslots,
 	storage_mmem_save_bundle,
 	storage_mmem_add_segment_to_bundle,
-    storage_mmem_read_bundle,
     storage_mmem_delete_bundle_by_bundle_number,
 	storage_mmem_delete_bundle_by_index_entry,
+    storage_mmem_read_bundle,
 	storage_mmem_get_free_space,
 	storage_mmem_get_bundle_count,
 	storage_mmem_get_index_block,

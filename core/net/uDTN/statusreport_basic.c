@@ -222,8 +222,16 @@ uint8_t statusreport_basic_send(struct mmem * bundlemem, uint8_t status, uint8_t
 		return 0;
 	}
 
+    // Set lifetime
+    lifetime = 3600;
+    //bundle_set_attr(report_bundle, LIFE_TIME, &lifetime);
+
+    // Make the outgoing bundle an admin record
+    flags = BUNDLE_FLAG_ADM_REC;
+    //bundle_set_attr(report_bundle, FLAGS, &flags);
+
 	// Allocate memory for our bundle
-	report_bundle = bundle_create_bundle();
+	report_bundle = bundle_new_bundle(report_node_id, report_service_id, report.source_eid_service, lifetime, flags);
 
 	// "Fake" the source of the bundle to be the agent
 	// Otherwise we cannot send bundles, because we do not have an endpoint registration
@@ -239,16 +247,8 @@ uint8_t statusreport_basic_send(struct mmem * bundlemem, uint8_t status, uint8_t
 
 	LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "Report goes to %lu.%lu", report_node_id, report_service_id);
 
-	// Set lifetime
-	lifetime = 3600;
-	//bundle_set_attr(report_bundle, LIFE_TIME, &lifetime);
-
-	// Make the outgoing bundle an admin record
-	flags = BUNDLE_FLAG_ADM_REC;
-	//bundle_set_attr(report_bundle, FLAGS, &flags);
-
     //FIXME
-    if(bundle_initialize_bundle(bundlemem, report_node_id, report_service_id, report.source_eid_service, lifetime, flags)){
+    if( bundle != NULL ){
 
         // Encode status report
         ret = statusreport_encode(&report, buffer, BUFFER_LENGTH);

@@ -59,7 +59,7 @@ void agent_init(void) {
 /*  Bundle Protocol Prozess */
 PROCESS_THREAD(agent_process, ev, data)
 {
-	uint32_t * bundle_number_ptr = NULL;
+	//uint32_t * bundle_number_ptr = NULL;
 	struct registration_api * reg;
 
 	PROCESS_BEGIN();
@@ -135,7 +135,7 @@ PROCESS_THREAD(agent_process, ev, data)
 		if(ev == dtn_send_bundle_event) {
 			//FIXME das event wird nicht mehr gebraucht, funktionalität wurde aufgeteilt unter storage_*.c und bundle.c
 		    // momentan benutzt statusreport_basic_send das noch...
-			LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "dtn_send_bundle_event(%p) with seqNo %lu", bundleptr, dtn_seq_nr);
+			//LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "dtn_send_bundle_event(%p) with seqNo %lu", bundleptr, dtn_seq_nr);
 		}
 		
 		if(ev == dtn_send_admin_record_event) {

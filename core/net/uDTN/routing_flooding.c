@@ -511,7 +511,7 @@ int routing_flooding_new_bundle(uint32_t * bundle_number)
 	}
 
 	// Now go and request the bundle from storage
-	bundlemem = BUNDLE_STORAGE.read_bundle(bundle_number,0,0);
+	bundlemem = BUNDLE_STORAGE.read_bundle(*bundle_number,0,0);
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_ROUTE, LOGL_ERR, "unable to read bundle %lu", *bundle_number);
 		mmem_free(&n->entry);
