@@ -285,7 +285,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 
 	/* And send it out */
 	dtn_network_send(&ticket->neighbour, length, (void *) ticket);
-
+printf("CL: sent -------------------------------------------------------------------------------\n"); //FIXME
 	return 1;
 }
 
@@ -418,6 +418,7 @@ int convergence_layer_resend_ack(struct transmit_ticket_t * ticket)
 
 int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, uint8_t length, uint8_t flags, uint8_t sequence_number)
 {
+    printf("parse dataframe\n"); //FIXME
 	struct mmem * bundlemem = NULL;
 	struct bundle_t * bundle = NULL;
 	int n;

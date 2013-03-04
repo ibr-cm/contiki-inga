@@ -257,16 +257,8 @@ uint8_t statusreport_basic_send(struct mmem * bundlemem, uint8_t status, uint8_t
 
         // Add status report to bundle
 
-        /* Allocate bundle payload block */
-        struct bundle_block_t *block;
-        block = bundle_allocate_block(report_bundle, ret, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
-        if (block != NULL){
-            /* Add payload */
-            memcpy(block->payload, buffer, ret);
-            //block->payload=*buffer;  //FIXME das wird so nicht funktionieren...
-            /* Add block to bundle */
-            bundle_add_block(bundlemem, block);
-        }
+        /* Allocate bundle payload block */ //FIXME add checks
+        ret = bundle_add_block(report_bundle, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, buffer, ret);
 
         if( ret < 0 )
             return -1;

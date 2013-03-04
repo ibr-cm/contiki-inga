@@ -95,10 +95,17 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
     bundle->src_srv=src_srv;
     bundle->dst_node=dest;
     bundle->dst_srv=dst_srv;
+    //FIXME
+    //printf("1. ID: %lu , Port: %lu , T-ID: %lu , T-Port: %lu\n",dtn_node_id,src_srv,dest,dst_srv);
+    //printf("2. ID: %lu , Port: %lu , T-ID: %lu , T-Port: %lu\n",bundle->src_node,bundle->src_srv,bundle->dst_node,bundle->dst_srv);
+
+    /* Set lifetime */
+    bundle->lifetime = lifetime;
 
     /* Set the outgoing sequence number */
     bundle->tstamp_seq=dtn_seq_nr;
     dtn_seq_nr++;
+    //printf("seq_nr: %d\n", dtn_seq_nr); //FIXME
 
     /* FIXME these are unused atm, are already zero */
     //bundle->tstamp = 0;
@@ -127,67 +134,63 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
 
     /* calculate & set bundle_num*/
     bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
-
+    printf("new_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
     return bundlemem;
 }
 
-struct bundle_block_t *bundle_allocate_block(struct mmem *bundlemem, uint16_t size, uint8_t type, uint8_t flags)
+//FIXME add_segm_to_block(start_offset, end_offset, *data)
+int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_t *data, uint32_t d_len)
 {
-    struct bundle_t *bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
-    struct bundle_block_t *block = (struct bundle_block_t *) bundle->block_data;
+       struct bundle_t *bundle;
+       struct bundle_block_t *block;
+       uint8_t i;
+       int n;
 
-    if(bundlemem->size < size){
-        //FIXME offset!
-        //FIXME mmem ->used_size hinzufügen?
-        return NULL;  //FIXME stattdessen else ...
-    }
+//       if(bundlemem->size < d_len){ //FIXME das geht so nicht...
+//           //FIXME offset!
+//           //FIXME mmem ->used_size hinzufügen?
+//           return 0;  //FIXME stattdessen else ...
+//       }
 
-    block->type = type;
-    block->flags = BUNDLE_BLOCK_FLAG_LAST | flags; //FIXME
-    block->block_size = size;
+       //FIXME je nach durchlauf muss an die passende stelle gesprungen werden, mehr platz alloziert werden
 
-    return block;
+       n = mmem_realloc(bundlemem, bundlemem->size + d_len + sizeof(struct bundle_block_t));
+       if( !n ) {
+               return -1;
+       }
 
-    //FIXME je nach durchlauf muss an die passende stelle gesprungen werden, mehr platz alloziert werden
+       bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
-    //FIXME aus alter bundle_add_block-Fkt
-//    struct bundle_t *bundle;
-//    uint8_t i;
-//    int n;
-//
-//    n = mmem_realloc(bundlemem, bundlemem->size + d_len + sizeof(struct bundle_block_t));
-//    if( !n ) {
-//        return -1;
-//    }
-//
-//    bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
-//
-//    /* FIXME: Make sure we don't traverse outside of our allocated memory */
-//
-//    /* Go through the blocks until we're behind the last one */
-//    block = (struct bundle_block_t *) bundle->block_data;
-//    for (i=0;i<bundle->num_blocks;i++) {
-//        /* None of these is the last block anymore */
-//        block->flags &= ~BUNDLE_BLOCK_FLAG_LAST;
-//        block = (struct bundle_block_t *) &block->payload[block->block_size];
-//    }
-}
+       /* FIXME: Make sure we don't traverse outside of our allocated memory */
 
-uint8_t bundle_add_block(struct mmem *bundlemem, struct bundle_block_t *block)
-{
-    uint8_t n = 0;
-    //FIXME das übergeben des blocks ist nicht erforderlich? fühlt sich aber besser an...
+       /* Go through the blocks until we're behind the last one */
+       block = (struct bundle_block_t *) bundle->block_data;
+       for (i=0;i<bundle->num_blocks;i++) {
+               /* None of these is the last block anymore */
+               block->flags &= ~BUNDLE_BLOCK_FLAG_LAST;
+               block = (struct bundle_block_t *) &block->payload[block->block_size];
+       }
 
-    //FIXME
-    // Save the bundle in storage
-    n = BUNDLE_STORAGE.save_bundle(bundlemem, STORAGE_NO_SEGMENT);
+       block->type = type;
+       block->flags = BUNDLE_BLOCK_FLAG_LAST | flags;
+       block->block_size = d_len;
 
-    /* Saving the bundle failed... */
-    if( !n ) {
-        /* Decrement the sequence number */
-        dtn_seq_nr--;
-    }
-	return 1;
+       bundle->num_blocks++;
+
+       memcpy(block->payload, data, d_len);
+
+       //FIXME
+       // Save the bundle in storage
+       n = BUNDLE_STORAGE.save_bundle(bundlemem, STORAGE_NO_SEGMENT);
+
+       /* Saving the bundle failed... */
+       if( !n ) {
+           /* Decrement the sequence number */
+           printf("b.c: saving failed\n");
+           dtn_seq_nr--;
+       }
+
+       return d_len;
 }
 
 //FIXME Block größer als RAM?

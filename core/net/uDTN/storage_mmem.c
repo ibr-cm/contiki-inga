@@ -283,6 +283,8 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	// This should do nothing, as we have incremented the reference counter before
 	bundle_decrement(bundlemem);
 
+    printf("save_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
+
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
     if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
         process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
@@ -382,6 +384,8 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 			break;
 		}
 	}
+	//FIXME
+    printf("read_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
 
 	if( entry == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "Could not find bundle %lu in storage_mmem_read_bundle", bundle_num);

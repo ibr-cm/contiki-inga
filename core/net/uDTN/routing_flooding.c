@@ -436,6 +436,7 @@ void routing_flooding_resubmit_bundles() {
  * \param bundle_number Number of the bundle
  */
 void routing_flooding_check_keep_bundle(uint32_t bundle_number) {
+    printf("ROUTING: Check Deleting bundle %lu\n", bundle_number); //FIXME
 	struct routing_list_entry_t * n = NULL;
 	struct routing_entry_t * entry = NULL;
 
@@ -457,10 +458,12 @@ void routing_flooding_check_keep_bundle(uint32_t bundle_number) {
 	}
 
 	if( (entry->flags & ROUTING_FLAG_LOCAL) || (entry->flags & ROUTING_FLAG_FORWARD) ) {
+	    printf("ROUTING: Check Flags, no delete %lu\n", bundle_number); //FIXME
 		return;
 	}
 
 	LOG(LOGD_DTN, LOG_ROUTE, LOGL_INF, "Deleting bundle %lu", bundle_number);
+	printf("ROUTING: Deleting bundle %lu\n", bundle_number); //FIXME
 	BUNDLE_STORAGE.del_bundle_by_bundle_number(bundle_number);
 }
 
@@ -736,6 +739,7 @@ void routing_flooding_bundle_delivered_locally(struct mmem * bundlemem) {
 	struct routing_list_entry_t * n = NULL;
 	struct routing_entry_t * entry = NULL;
 	struct bundle_t * bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+    printf("ROUTING: locally delivered: %lu",bundle->bundle_num); //FIXME
 
 	// Tell the agent to call us again to resubmit bundles
 	routing_flooding_schedule_resubmission();

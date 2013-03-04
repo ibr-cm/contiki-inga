@@ -80,7 +80,7 @@
 #define PAYLOAD_LEN 80
 #endif
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -109,10 +109,11 @@ static clock_time_t get_time()
 }
 
 /* Convenience function to populate a bundle */
-static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16_t src_srv,  uint8_t *data, uint16_t len)
+static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32_t src_srv,  uint8_t *data, uint32_t len)
 {
+    printf("bc: dest: %lu, d_srv: %lu, s_srv: %lu, len: %lu\n",dest,dst_srv,src_srv,len); //FIXME
 	struct mmem *bundlemem;
-	struct bundle_block_t *block;
+	uint32_t block_size= 0;
 
 	bundlemem = bundle_new_bundle(dest, dst_srv, src_srv, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 	if (!bundlemem) {
@@ -120,16 +121,14 @@ static inline uint8_t bundle_convenience(uint16_t dest, uint16_t dst_srv, uint16
 		return 0;
 	}
 
-    /* Allocate bundle payload block */
-    block = bundle_allocate_block(bundlemem, len, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL);
-    if (block != NULL){
-        /* Add payload */
-        memcpy(block->payload, data, len);
-        //block->payload=*data;
-        /* Add block to bundle */
-        bundle_add_block(bundlemem, block);
-    }
-    return 1;
+	struct bundle_t *bundle;
+	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+    printf("bc_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
+
+    printf("Allocate bundle payload block\n");
+	block_size = bundle_add_block(bundlemem, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, data, len);
+
+    return block_size;
 }
 
 PROCESS_THREAD(coordinator_process, ev, data)
@@ -223,8 +222,9 @@ PROCESS_THREAD(ping_process, ev, data)
 			}
 
 			PRINTF("PING: send sync\n");
+			//printf("bbc: D: %d PO: %d PI: %d L: %d\n",CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, PAYLOAD_LEN); FIXME
 			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)){
-				//FIXME alles ok
+	            printf("bundle_convenience: SUCCESS\n"); //FIXME
 			}
 
 		}
@@ -275,7 +275,7 @@ PROCESS_THREAD(ping_process, ev, data)
 			process_post(&agent_process, dtn_processing_finished, recv);
 
 			/* We're done */
-			if (bundle_recvd >= 1000)
+			if (bundle_recvd >= 10)
 				break;
 
 			/* Send PING */
@@ -287,6 +287,7 @@ PROCESS_THREAD(ping_process, ev, data)
 
 			PRINTF("PING: send ping\n");
 			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)) {
+			    printf("bundle_convenience: SUCCESS\n"); //FIXME
 				bundle_sent++;
 			}
 		}
@@ -371,7 +372,7 @@ PROCESS_THREAD(pong_process, ev, data)
 		/* Send PONG */
 		PRINTF("PONG: send\n");
 		if (bundle_convenience(CONF_DEST_NODE, REG_PING_APP_ID, REG_PONG_APP_ID, (uint8_t *) u32_ptr, 4)){
-		    //FIXME alles ok
+            printf("bundle_convenience: SUCCESS\n"); //FIXME
 		}
 
 		bundle_sent++;
