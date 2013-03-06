@@ -458,7 +458,8 @@ void routing_flooding_check_keep_bundle(uint32_t bundle_number) {
 	}
 
 	if( (entry->flags & ROUTING_FLAG_LOCAL) || (entry->flags & ROUTING_FLAG_FORWARD) ) {
-	    printf("ROUTING: Check Flags, no delete %lu\n", bundle_number); //FIXME
+	    printf("ROUTING: Check Flags, no delete %lu, Flags: %u\n", bundle_number, entry->flags); //FIXME
+	    //FIXME why are locally delivered bundles not getting deleted?
 		return;
 	}
 

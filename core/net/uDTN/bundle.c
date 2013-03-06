@@ -160,6 +160,7 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
        }
 
        bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+       printf("add_block: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
 
        /* FIXME: Make sure we don't traverse outside of our allocated memory */
 

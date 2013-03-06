@@ -129,6 +129,7 @@ void storage_mmem_prune()
 
 		if( bundle->lifetime < elapsed_time ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "bundle lifetime expired of bundle %lu", entry->bundle_num);
+            printf("PRUNE: bundle lifetime expired of bundle %lu\n", entry->bundle_num); //FIXME
 			storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
 		}
 	}
@@ -168,7 +169,7 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 	struct bundle_t * bundle_new = NULL;
 	struct bundle_t * bundle_old = NULL;
 
-	/* Now delete expired bundles */
+	/* Now delete expired bundles */  //FIXME not what we want...
 	storage_mmem_prune();
 
 	/* If we do not have a pointer, we cannot compare - do nothing */
@@ -224,14 +225,19 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "storage_mmem_save_bundle with invalid pointer %p", bundlemem);
+        printf("storage_mmem_save_bundle with invalid pointer %p", bundlemem); //FIXME
 		return 0;
 	}
 
 	// Get the pointer to our bundle
 	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
+	//FIXME
+    printf("save_try: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
+
 	if( bundle == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "storage_mmem_save_bundle with invalid MMEM structure");
+        printf("storage_mmem_save_bundle with invalid MMEM structure"); //FIXME
 		return 0;
 	}
 
@@ -243,6 +249,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 		if( bundle->bundle_num == entrybdl->bundle_num ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "%lu is the same bundle", entry->bundle_num);
+            printf("%lu is the same bundle", entry->bundle_num); //FIXME
 			bundle_decrement(bundlemem);
 			return 1;
 		}
@@ -250,6 +257,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 	if( !storage_mmem_make_room(bundlemem) ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "Cannot store bundle, no room");
+        printf("Cannot store bundle, no room"); //FIXME
 		return 0;
 	}
 
@@ -259,6 +267,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	entry = memb_alloc(&bundle_mem);
 	if( entry == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "unable to allocate struct, cannot store bundle");
+        printf("unable to allocate struct, cannot store bundle"); //FIXME
 		bundle_decrement(bundlemem);
 		return 0;
 	}
@@ -271,7 +280,11 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	bundle_increment(bundlemem);
 	bundles_in_storage++;
 
+	// Set bundle number //FIXME deprecated
+	entry->bundle_num = bundle->bundle_num;
+
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "New Bundle %lu (%lu), Src %lu, Dest %lu, Seq %lu", bundle->bundle_num, entry->bundle_num, bundle->src_node, bundle->dst_node, bundle->tstamp_seq);
+    printf("New Bundle %lu (%lu), Src %lu, Dest %lu, Seq %lu", bundle->bundle_num, entry->bundle_num, bundle->src_node, bundle->dst_node, bundle->tstamp_seq); //FIXME
 
 	// Notify the statistics module
 	storage_mmem_update_statistics();
@@ -283,6 +296,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	// This should do nothing, as we have incremented the reference counter before
 	bundle_decrement(bundlemem);
 
+    //FIXME
     printf("save_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
 
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
@@ -310,6 +324,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 	struct bundle_list_entry_t * entry = NULL;
 
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "Deleting Bundle %lu", bundle_number);
+    printf("Deleting Bundle %lu\n", bundle_number); //FIXME
 
 	// Look for the bundle we are talking about
 	for(entry = list_head(bundle_list);
