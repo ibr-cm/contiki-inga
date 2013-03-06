@@ -39,7 +39,6 @@
 static uint8_t next_mode = STORAGE_CACHED_GET_BUNDLES_HEAD; //FIXME flags zusammenlegen
 
 //FIXME dummy index block
-//FIXME besser mehr dimensionen?
 static struct bundle_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 static uint8_t temp_index_array_toggle = 0;
 static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };

@@ -35,6 +35,17 @@
 
 #include "storage.h"
 
+//FIXME dummy index block
+static struct bundle_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
+static uint8_t temp_index_array_toggle = 0;
+static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
+
+//      * index_newest_block
+//      storage_cached_get_index_block()
+//static uint8_t last_index_entry = BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS+1;
+/** Last written block with index data, initialized with invalid value */  //FIXME this replaces temp_index_array
+//static uint8_t last_index_block_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
+
 // defined in mmem.c, no function to access it though
 extern unsigned int avail_memory;
 
@@ -452,10 +463,82 @@ uint16_t storage_mmem_get_bundle_count(void){
  * \brief Get the bundle list
  * \returns pointer to first bundle list entry
  */
-struct mmem *storage_mmem_get_index_block(uint8_t blocknr)
-{
-    //FIXME for 0 to BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS ...
-	return (struct storage_entry_t *) list_head(bundle_list);
+struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
+
+    int ret;
+    struct bundle_slot_t *bs;
+    struct bundle_t *index_block;
+
+    bs = bundleslot_get_free();
+
+    if( bs == NULL ) {
+        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate slot for a bundle");
+        return NULL;
+    }
+
+    //FIXME
+    //ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
+    ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
+    if (!ret) {
+        bundleslot_free(bs);
+        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate memory for a bundle");
+        return NULL;
+    }
+
+    index_block = (struct bundle_t *) MMEM_PTR(&bs->bundle);
+    //memset(index_block, 0, sizeof(struct bundle_t));
+    memset(index_block, 0, MIN_BUNDLESLOT_SIZE);
+
+    //FIXME simuliert Ende der Liste
+    if(temp_index_array_toggle == 1){
+        temp_index_array_toggle = 0;
+        return NULL;
+    } else {
+        temp_index_array_toggle = 1;
+    }
+
+    //get "next" index block from cache
+    //struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_partition(CACHE_PARTITION_NEXT_BLOCK, CACHE_PARTITION_B_INDEX_START, last_index_block_address);
+
+//    uint8_t i;
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
+//      temp_index_array[i].bundle_num=i+1; //FIXME ID
+//      temp_index_array[i].dst_node=i+1;  //FIXME Zielnode
+//    }
+//
+//    //FIXME nur bei RAM-Block nötig
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
+//          if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
+//              *index_array_entrys = i-1;
+//              break;
+//          }
+//    }
+//
+//
+// TEST
+//  int main(void){
+//          struct storage_index_entry_t *array_ptr = NULL;
+//          int array_length = 0;
+//          array_ptr = storage_cached_get_bundles(STORAGE_CACHED_GET_BUNDLES_HEAD, &array_length);
+//
+//          int i;
+//          for(i=0; i<array_length; ++i){
+//                  printf("Bundle[%d] : [ID] %d : [Dest] %d\n",i,array_ptr[i].bundle_num,array_ptr[i].dst_node);
+//          }
+//          return 0;
+//  }
+
+    //return temp_index_array;
+
+    //FIXME Beim 2. - n. Aufruf: Array 2 - n
+    //      Dann 1mal länge 0
+    //      Dann wieder von vorne
+    //      Blockiert bis zum nächsten read den entsprechenden Cacheblock, d.h. Liste muss komplett durchlaufen werden
+    //      state pro aufrufer?
+    //      freigeben von liste?
+    //      Kümmert sich um das Nachladen vom Flash
+
+    return &bs->bundle;
 }
 
 uint8_t storage_mmem_housekeeping(uint16_t time){
