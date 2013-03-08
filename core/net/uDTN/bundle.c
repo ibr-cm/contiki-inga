@@ -95,9 +95,6 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
     bundle->src_srv=src_srv;
     bundle->dst_node=dest;
     bundle->dst_srv=dst_srv;
-    //FIXME
-    //printf("1. ID: %lu , Port: %lu , T-ID: %lu , T-Port: %lu\n",dtn_node_id,src_srv,dest,dst_srv);
-    //printf("2. ID: %lu , Port: %lu , T-ID: %lu , T-Port: %lu\n",bundle->src_node,bundle->src_srv,bundle->dst_node,bundle->dst_srv);
 
     /* Set lifetime */
     bundle->lifetime = lifetime;
@@ -105,9 +102,8 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
     /* Set the outgoing sequence number */
     bundle->tstamp_seq=dtn_seq_nr;
     dtn_seq_nr++;
-    //printf("seq_nr: %d\n", dtn_seq_nr); //FIXME
 
-    /* FIXME these are unused atm, are already zero */
+    /* FIXME needed for bundle identification but unused atm, are already zero */
     //bundle->tstamp = 0;
     //bundle->frag_offs = 0;
     //bundle->app_len = 0;

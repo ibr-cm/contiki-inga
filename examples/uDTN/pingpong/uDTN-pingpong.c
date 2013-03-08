@@ -109,9 +109,8 @@ static clock_time_t get_time()
 }
 
 /* Convenience function to populate a bundle */
-static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32_t src_srv,  uint8_t *data, uint32_t len)
+static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32_t src_srv,  uint8_t *data, uint32_t len) //FIXME send_bundle?
 {
-    printf("bc: dest: %lu, d_srv: %lu, s_srv: %lu, len: %lu\n",dest,dst_srv,src_srv,len); //FIXME
 	struct mmem *bundlemem;
 	uint32_t block_size= 0;
 
@@ -123,10 +122,11 @@ static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32
 
 	struct bundle_t *bundle;
 	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
-    printf("bc_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
 
-    printf("Allocate bundle payload block\n");
+    /* Allocate bundle payload block, if BUNDLE_BLOCK_FLAG_LAST and last block segment, bundle can be considered "sent" (dtn_bundle_in_storage_event) FIXME */
 	block_size = bundle_add_block(bundlemem, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, data, len);
+
+	//FIXME hier block_size checken, evtl. bundle_add_segment_to_block und später bundle_add_block/bundle_add_segment_to_block bis BUNDLE_BLOCK_FLAG_LAST
 
     return block_size;
 }
