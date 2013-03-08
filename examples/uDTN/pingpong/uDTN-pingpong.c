@@ -124,7 +124,7 @@ static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32
 	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
     /* Allocate bundle payload block, if BUNDLE_BLOCK_FLAG_LAST and last block segment, bundle can be considered "sent" (dtn_bundle_in_storage_event) FIXME */
-	block_size = bundle_add_block(bundlemem, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, data, len);
+	block_size = bundle_add_block(bundlemem, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, data, len); 
 
 	//FIXME hier block_size checken, evtl. bundle_add_segment_to_block und später bundle_add_block/bundle_add_segment_to_block bis BUNDLE_BLOCK_FLAG_LAST
 
@@ -222,7 +222,6 @@ PROCESS_THREAD(ping_process, ev, data)
 			}
 
 			PRINTF("PING: send sync\n");
-			//printf("bbc: D: %d PO: %d PI: %d L: %d\n",CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, PAYLOAD_LEN); FIXME
 			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)){
 	            printf("bundle_convenience: SUCCESS\n"); //FIXME
 			}

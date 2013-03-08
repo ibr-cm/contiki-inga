@@ -205,6 +205,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 
 	/* Read the bundle from storage, if it is not in memory */
 	if( ticket->bundle == NULL ) {
+	    printf("cl_rb: "); //FIXME
 		ticket->bundle = BUNDLE_STORAGE.read_bundle(ticket->bundle_number,0,0); //FIXME
 		if( ticket->bundle == NULL ) {
 			LOG(LOGD_DTN, LOG_CL, LOGL_ERR, "Unable to read bundle %lu", ticket->bundle_number);
@@ -221,6 +222,9 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 		ticket->bundle = NULL;
 		return -1;
 	}
+
+    printf("cl_send: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SeqNr: %lu , LT: %lu, ID: %lu \n",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 
 	/* Check if bundle has expired */
 	if( bundle->lifetime == 0 ) {

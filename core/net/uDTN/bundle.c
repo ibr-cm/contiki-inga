@@ -130,7 +130,6 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
 
     /* calculate & set bundle_num*/
     bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
-    printf("new_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
     return bundlemem;
 }
 
@@ -156,7 +155,6 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
        }
 
        bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
-       printf("add_block: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SN: %lu , ID: %lu \n", bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->bundle_num);
 
        /* FIXME: Make sure we don't traverse outside of our allocated memory */
 
