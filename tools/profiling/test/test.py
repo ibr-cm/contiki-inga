@@ -452,36 +452,6 @@ class Testsuite(object):
 		self.logdir = os.path.join(self.config['logbase'], logdir)
 		mkdir_p(self.logdir)
 
-		# create symlink to logdir
-		try:
-			self.logdir_last = os.path.join(self.config['logbase'], "lastlog")
-			if os.path.islink(self.logdir_last):
-				os.unlink(self.logdir_last)
-			os.symlink(self.logdir, self.logdir_last)
-		#FIXME be more specific...
-		except Exception:
-			self.logdir_last = "FAILED"
-
-		self.devices = {}
-		for devicecfg in devcfg:
-			deviceclass = globals()[devicecfg['class']]
-			deviceinst = deviceclass(devicecfg)
-			self.devices[devicecfg['name']] = deviceinst
-
-		self.tests = {}
-		self.build_inga_tool = False
-		for testcfg in testcfg:
-			testcfg['logbase'] = self.logdir
-			testcfg['contikibase'] = self.config['contikibase']
-			if testcfg['name'] in self.config['testcases']:
-				testcase = Testcase(testcfg, self.devices, testcfg['devices'])
-				self.tests[testcfg['name']] = testcase
-				# Check if we need to build inga_tool
-				if not self.build_inga_tool:
-					for dev in testcfg['devices']:
-						if self.devices[dev['name']].platform == 'inga':
-							self.build_inga_tool = True
-
 		# Set up logging to file
 		filehandler = logging.FileHandler(os.path.join(self.logdir, "build.log"))
 		filehandler.setLevel(logging.DEBUG)
@@ -490,17 +460,58 @@ class Testsuite(object):
 		filehandler.setFormatter(fileformat)
 		logging.getLogger('').addHandler(filehandler)
 
+		logging.info("Logs are located under %s", self.logdir)
+
 		with open(os.path.join(self.logdir, 'contikiversion'), 'w') as verfile:
 			verfile.write(self.contikiversion)
 			verfile.write('\n')
 
 		shutil.copyfile(options.configfile, os.path.join(self.logdir, 'config.yaml'))
 
+		# create symlink to logdir
+		try:
+			self.logdir_last = os.path.join(self.config['logbase'], "lastlog")
+			if os.path.islink(self.logdir_last):
+				os.unlink(self.logdir_last)
+			os.symlink(self.logdir, self.logdir_last)
+			logging.info("Symlink to Logs under %s", self.logdir_last)
+		#FIXME be more specific...
+		except Exception:
+			self.logdir_last = "FAILED"
+
+		self.devices = {}
+		self.build_inga_tool = False
+		for devicecfg in devcfg:
+			# Build inga_tool if needed
+			if not self.build_inga_tool:
+				if devicecfg['class'] == 'inga':
+					self.build_inga_tool = True
+					self.inga_tool_dir = os.path.join(self.config['contikibase'], "tools", "inga", "inga_tool")
+					logging.info("Building inga_tool %s", self.inga_tool_dir)
+					if not os.path.exists(self.inga_tool_dir):
+						logging.error("Could not find %s", self.inga_tool_dir)
+						raise Exception
+					try:
+						output = subprocess.check_output(["make", "-C", self.inga_tool_dir], stderr=subprocess.STDOUT)
+						logging.debug(output)
+					except subprocess.CalledProcessError as err:
+						logging.error(err)
+						logging.error(err.output)
+						raise
+			deviceclass = globals()[devicecfg['class']]
+			deviceinst = deviceclass(devicecfg)
+			self.devices[devicecfg['name']] = deviceinst
+
+		self.tests = {}
+		for testcfg in testcfg:
+			testcfg['logbase'] = self.logdir
+			testcfg['contikibase'] = self.config['contikibase']
+			if testcfg['name'] in self.config['testcases']:
+				testcase = Testcase(testcfg, self.devices, testcfg['devices'])
+				self.tests[testcfg['name']] = testcase
+
 		# Info
 		logging.info("Profiling suite - initialized")
-		logging.info("Logs are located under %s", self.logdir)
-		if self.logdir_last != "FAILED":
-			logging.info("Symlink to Logs under %s", self.logdir_last)
 		logging.info("Contiki base path is %s", self.config['contikibase'])
 		logging.info("Contiki version is %s", self.contikiversion)
 		logging.info("The following devices are defined:")
@@ -516,21 +527,6 @@ class Testsuite(object):
 
 
 	def run(self):
-		# Build inga_tool
-		if self.build_inga_tool:
-			self.inga_tool_dir = os.path.join(self.config['contikibase'], "tools", "inga", "inga_tool")
-			logging.info("Building inga_tool %s", self.inga_tool_dir)
-			if not os.path.exists(self.inga_tool_dir):
-				logging.error("Could not find %s", self.inga_tool_dir)
-				raise Exception
-			try:
-				output = subprocess.check_output(["make", "-C", self.inga_tool_dir], stderr=subprocess.STDOUT)
-				logging.debug(output)
-			except subprocess.CalledProcessError as err:
-				logging.error(err)
-				logging.error(err.output)
-				raise
-
 		failure = []
 		success = []
 		for testname in self.config['testcases']:
