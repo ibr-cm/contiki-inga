@@ -70,6 +70,11 @@
 #define REPORT 1
 #endif
 
+#define REG_SENDER_APP_ID 25
+#define REG_SINK_APP_ID 25
+
+#define BUNDLE_LIFETIME 2000
+
 /*---------------------------------------------------------------------------*/
 PROCESS(udtn_sender_process, "uDTN Sender process");
 AUTOSTART_PROCESSES(&udtn_sender_process);
@@ -175,7 +180,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		}
 
 		/* Only proceed, when we have enough storage left */
-		if( BUNDLE_STORAGE.free_space(NULL) < 1 ) {
+		if( BUNDLE_STORAGE.get_free_space() < 1 ) {
 			process_post(&udtn_sender_process, PROCESS_EVENT_CONTINUE, NULL);
 			continue;
 		}
@@ -189,43 +194,29 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		}
 
 		/* Allocate memory for the outgoing bundle */
-		bundle_outgoing = bundle_create_bundle();
+		bundle_outgoing = bundle_new_bundle(CONF_SEND_TO_NODE, REG_SINK_APP_ID, REG_SENDER_APP_ID, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 
 		if( bundle_outgoing == NULL ) {
 			printf("create_bundle failed\n");
 			continue;
 		}
-
-		/* Source, destination, custody and report-to nodes and services*/
-		tmp=CONF_SEND_TO_NODE;
-		bundle_set_attr(bundle_outgoing, DEST_NODE, &tmp);
-		tmp=25;
-		bundle_set_attr(bundle_outgoing, DEST_SERV, &tmp);
-
+#if REPORT
 		/* Bundle flags */
 		tmp=BUNDLE_FLAG_SINGLETON;
-#if REPORT
 		/* Enable bundle delivery report */
 		tmp |= BUNDLE_FLAG_REP_DELIV;
-#endif
 		bundle_set_attr(bundle_outgoing, FLAGS, &tmp);
-
-		/* Bundle lifetime */
-		tmp=2000;
-		bundle_set_attr(bundle_outgoing, LIFE_TIME, &tmp);
+#endif
 
 		/* Add the payload */
 		for(i=0; i<80; i++)
 			userdata[i] = i;
-		n = bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, userdata, 80);
+		n = bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 80);
 		if( !n ) {
 			printf("not enough room for block\n");
 			bundle_decrement(bundle_outgoing);
 			continue;
 		}
-
-		/* Hand the bundle over to the agent */
-		process_post(&agent_process, dtn_send_bundle_event, (void *) bundle_outgoing);
 
 		bundles_sent++;
 		/* Show progress every 50 bundles */

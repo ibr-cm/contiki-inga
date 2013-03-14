@@ -61,6 +61,14 @@
 #define DATASIZE 30
 #endif
 
+#define GB_DESTINATION_NODE 0x0001
+#define GB_DESTINATION_SERVICE 23
+#define GB_SOURCE_SERVICE 42
+#define GB_LIFETIME 1
+#define GB_FLAGS 0
+
+#define REG_TEST_APP_ID 10
+
 /*---------------------------------------------------------------------------*/
 PROCESS(bundle_generator_process, "Bundle generator process");
 PROCESS(bundle_verificator_process, "Bundle verificator process");
@@ -107,12 +115,13 @@ PROCESS_THREAD(profiling_process, ev, data)
 
 PROCESS_THREAD(bundle_verificator_process, ev, data)
 {
+//    static struct registration_api reg_verif;
+//    static struct etimer timer1;
 	uint32_t val;
 	struct mmem *bundle1, *bundle2;
 	static uint8_t databuf[DATASIZE];
 	uint8_t buffer1[120], buffer2[120], len1, len2;
 	int i, first;
-
 	for (i=0; i<DATASIZE; i++) {
 		databuf[i] = i;
 	}
@@ -121,21 +130,33 @@ PROCESS_THREAD(bundle_verificator_process, ev, data)
 
 	PROCESS_PAUSE();
 
-	bundle1 = bundle_create_bundle();
+//    /* Register our endpoint */
+//    reg_verif.status = APP_ACTIVE;
+//    reg_verif.application_process = PROCESS_CURRENT();
+//    reg_verif.app_id = GB_SOURCE_SERVICE;
+//    process_post(&agent_process, dtn_application_registration_event, &reg_verif);
+//
+//    /* Wait a second */
+//    etimer_set(&timer1,  CLOCK_SECOND);
+//    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer1));
+//
+//    printf("Endpoint registered, starting test\n");
+
+	bundle1 = bundle_new_bundle(GB_DESTINATION_NODE, GB_DESTINATION_SERVICE, GB_SOURCE_SERVICE, GB_LIFETIME, GB_FLAGS);
 	/* Set node destination and source address */
-	val=0x0001;
-	bundle_set_attr(bundle1, DEST_NODE, &val);
-	val=23;
-	bundle_set_attr(bundle1, DEST_SERV, &val);
+	//val=0x0001;
+	//bundle_set_attr(bundle1, DEST_NODE, &val);
+	//val=23;
+	//bundle_set_attr(bundle1, DEST_SERV, &val);
 	val=0x0002;
-	bundle_set_attr(bundle1, SRC_NODE, &val);
+	//bundle_set_attr(bundle1, SRC_NODE, &val);
 	bundle_set_attr(bundle1, CUST_NODE, &val);
 	val=42;
-	bundle_set_attr(bundle1, SRC_SERV,&val);
+	//bundle_set_attr(bundle1, SRC_SERV,&val);
 	bundle_set_attr(bundle1, CUST_SERV, &val);
 
-	val=0;
-	bundle_set_attr(bundle1, FLAGS, &val);
+	//val=0;
+	//bundle_set_attr(bundle1, FLAGS, &val);
 
 	val=1;
 	bundle_set_attr(bundle1, REP_NODE, &val);
@@ -143,8 +164,8 @@ PROCESS_THREAD(bundle_verificator_process, ev, data)
 
 	val = numbundles;
 	bundle_set_attr(bundle1, TIME_STAMP_SEQ_NR, &val);
-	val=1;
-	bundle_set_attr(bundle1, LIFE_TIME, &val);
+	//val=1;
+	//bundle_set_attr(bundle1, LIFE_TIME, &val);
 	val=4;
 	bundle_set_attr(bundle1, TIME_STAMP, &val);
 
@@ -186,6 +207,8 @@ PROCESS_THREAD(bundle_verificator_process, ev, data)
 
 PROCESS_THREAD(bundle_generator_process, ev, data)
 {
+//    static struct registration_api reg_gen;
+//    static struct etimer timer2;
 	uint32_t val;
 	struct mmem *bundlemem;
 	static uint8_t databuf[DATASIZE];
@@ -199,21 +222,33 @@ PROCESS_THREAD(bundle_generator_process, ev, data)
 	while(1) {
 		PROCESS_PAUSE();
 
-		bundlemem = bundle_create_bundle();
+//	    /* Register our endpoint */
+//	    reg_gen.status = APP_ACTIVE;
+//	    reg_gen.application_process = PROCESS_CURRENT();
+//	    reg_gen.app_id = GB_SOURCE_SERVICE;
+//	    process_post(&agent_process, dtn_application_registration_event, &reg_gen);
+//
+//	    /* Wait a second */
+//	    etimer_set(&timer2,  CLOCK_SECOND);
+//	    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer2));
+//
+//	    printf("Endpoint registered, starting test\n");
+
+	    bundlemem = bundle_new_bundle(GB_DESTINATION_NODE, GB_DESTINATION_SERVICE, GB_SOURCE_SERVICE, GB_LIFETIME, GB_FLAGS);
 		/* Set node destination and source address */
-		val=0x0001;
-		bundle_set_attr(bundlemem, DEST_NODE, &val);
-		val=23;
-		bundle_set_attr(bundlemem, DEST_SERV, &val);
+		//val=0x0001;
+		//bundle_set_attr(bundlemem, DEST_NODE, &val);
+		//val=23;
+		//bundle_set_attr(bundlemem, DEST_SERV, &val);
 		val=0x0002;
-		bundle_set_attr(bundlemem, SRC_NODE, &val);
+		//bundle_set_attr(bundlemem, SRC_NODE, &val);
 		bundle_set_attr(bundlemem, CUST_NODE, &val);
 		val=42;
-		bundle_set_attr(bundlemem, SRC_SERV,&val);
+		//bundle_set_attr(bundlemem, SRC_SERV,&val);
 		bundle_set_attr(bundlemem, CUST_SERV, &val);
 
-		val=0;
-		bundle_set_attr(bundlemem, FLAGS, &val);
+		//val=0;
+		//bundle_set_attr(bundlemem, FLAGS, &val);
 
 		val=1;
 		bundle_set_attr(bundlemem, REP_NODE, &val);
@@ -221,8 +256,8 @@ PROCESS_THREAD(bundle_generator_process, ev, data)
 
 		val = numbundles;
 		bundle_set_attr(bundlemem, TIME_STAMP_SEQ_NR, &val);
-		val=1;
-		bundle_set_attr(bundlemem, LIFE_TIME, &val);
+		//val=1;
+		//bundle_set_attr(bundlemem, LIFE_TIME, &val);
 		val=4;
 		bundle_set_attr(bundlemem, TIME_STAMP, &val);
 

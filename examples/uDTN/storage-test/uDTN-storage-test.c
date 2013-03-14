@@ -58,6 +58,12 @@
 
 #define REG_TEST_APP_ID 10
 
+//FIXME
+#ifndef CONF_DEST_NODE
+#warning "CONF_DEST_NODE not defined, this node will operate in loopback mode"
+#define CONF_DEST_NODE dtn_node_id
+#endif
+
 // defined in mmem.c, no function to access it though
 extern unsigned int avail_memory;
 
@@ -77,7 +83,7 @@ uint8_t my_create_bundle(uint32_t sequence_number, uint32_t * bundle_number, uin
 	uint32_t i;
 	uint8_t payload[60];
 
-	ptr = bundle_new_bundle(0, REG_TEST_APP_ID, REG_TEST_APP_ID, lifetime, BUNDLE_FLAG_SINGLETON);  //FIXME we have to use a registered service...
+	ptr = bundle_new_bundle(CONF_DEST_NODE, REG_TEST_APP_ID, REG_TEST_APP_ID, lifetime, BUNDLE_FLAG_SINGLETON);  //FIXME we have to use a registered service...
 
 	if( ptr == NULL ) {
 		printf("CREATE: Bundle %lu could not be allocated\n", sequence_number);

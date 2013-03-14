@@ -194,6 +194,7 @@ uint8_t bundle_get_attr(struct mmem *bundlemem, uint8_t attr, uint32_t *val);
  * \brief Get a new bundle structure allocated
  * \return MMEM allocation of the bundle, NULL in case of an error
  */
+//FIXME hier entfernen
 struct mmem * bundle_create_bundle();
 
 /**

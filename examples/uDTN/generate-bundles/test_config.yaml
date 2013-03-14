@@ -7,8 +7,8 @@ tests:
         programdir: examples/uDTN/generate-bundles
         program: uDTN-generate-bundles
         instrument: [examples/uDTN/generate-bundles/uDTN-generate-bundles.c,core/net/uDTN/bundle.c,core/net/uDTN/sdnv.c]
-        debug: []
-        cflags: "-fno-inline -DDATASIZE=20 -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        debug: [core/net/uDTN/bundle.c,core/net/uDTN/storage_mmem.c,examples/uDTN/generate-bundles/uDTN-generate-bundles.c]
+        cflags: "-fno-inline -DDATASIZE=20 -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DTEST_NO_NETWORK=1"
         graph_options: ""
   - name: generate-bundles-80
     timeout: 60

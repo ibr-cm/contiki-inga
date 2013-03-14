@@ -82,6 +82,11 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
 
     bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
+//FIXME !!!
+//check this elsewhere?
+#ifdef TEST_NO_NETWORK
+    printf("new_bundle: TEST_NO_NETWORK\n");
+#else
     /* Go and find the process from which the bundle has been sent */ //FIXME wird evtl. noch an anderer stelle benötigt?
     if(registration_return_status(src_srv, dtn_node_id) == -1 && bundle->source_process != &agent_process) {
 //    if( registration_get_application_id(src_srv) == 0xFFFF && bundle->source_process != &agent_process) {
@@ -89,6 +94,7 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
         bundle_decrement(bundlemem);
         return NULL;
     }
+#endif
 
     /* Set the source node, source service, destination node, destination service */
     bundle->src_node=dtn_node_id;

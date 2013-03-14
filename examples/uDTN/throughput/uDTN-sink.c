@@ -62,6 +62,11 @@
 #define BUNDLES 1000
 #endif
 
+#define REG_SENDER_APP_ID 25
+#define REG_SINK_APP_ID 25
+
+#define BUNDLE_LIFETIME 2000
+
 /*---------------------------------------------------------------------------*/
 PROCESS(udtn_sink_process, "uDTN Sink process");
 AUTOSTART_PROCESSES(&udtn_sink_process);
@@ -184,33 +189,17 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			profiling_stop();
 			time_stop = test_precise_timestamp(NULL);
 
-			bundle_outgoing = bundle_create_bundle();
+			bundle_outgoing = bundle_new_bundle(tmp, REG_SENDER_APP_ID, REG_SINK_APP_ID, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 
 			if( bundle_outgoing == NULL ) {
 				printf("create_bundle failed\n");
 				continue;
 			}
 
-			/* tmp already holds the src address of the sender */
-			bundle_set_attr(bundle_outgoing, DEST_NODE, &tmp);
-			tmp=25;
-			bundle_set_attr(bundle_outgoing, DEST_SERV, &tmp);
-
-			/* Bundle flags */
-			tmp=BUNDLE_FLAG_SINGLETON;
-			bundle_set_attr(bundle_outgoing, FLAGS, &tmp);
-
-			/* Bundle lifetime */
-			tmp=2000;
-			bundle_set_attr(bundle_outgoing, LIFE_TIME, &tmp);
-
 			/* Add the payload */
 			userdata[0] = 'o';
 			userdata[1] = 'k';
-			bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_NULL, userdata, 2);
-
-			/* Send out the bundle */
-			process_post(&agent_process, dtn_send_bundle_event, (void *) bundle_outgoing);
+			bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 2);
 
 			/* Wait for the agent to process our outgoing bundle */
 			PROCESS_WAIT_UNTIL(ev == dtn_bundle_stored);

@@ -427,7 +427,9 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
     if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
         //FIXME !!!
-#ifndef TEST_NO_NETWORK
+#ifdef TEST_NO_NETWORK
+        printf("save_bundle: TEST_NO_NETWORK\n");
+#else
         process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
 #endif
         /* Add index entry*/
