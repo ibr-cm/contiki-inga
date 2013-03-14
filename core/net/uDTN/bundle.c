@@ -183,6 +183,7 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
            /* Decrement the sequence number */
            printf("b.c: saving failed\n");
            dtn_seq_nr--;
+           return 0;
        }
 
        return d_len;

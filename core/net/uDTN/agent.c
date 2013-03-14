@@ -156,6 +156,26 @@ PROCESS_THREAD(agent_process, ev, data)
 			LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "bundle %lu in storage", *bundle_number);
 			printf("AGENT: bundle %lu in storage\n", *bundle_number); //FIXME
 
+//			//FIXME index-test
+//			struct mmem *indexmem;
+//			indexmem = BUNDLE_STORAGE.get_index_block(1);
+//			if(indexmem != NULL){
+//                struct bundle_index_entry_t *index_entry;
+//                index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
+//                printf("Checking Index:\n");
+//                uint8_t i;
+//                for(i=0;i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS;++i){
+//                    if(index_entry[i].bundle_num == 0 && index_entry[i].dst_node == 0){
+//                        break;
+//                    }
+//                    printf("ID: %lu, Target: %lu\n",index_entry[i].bundle_num,index_entry[i].dst_node);
+//                }
+//                bundle_decrement(indexmem);
+//			} else {
+//                printf("Index NULL\n");
+//			}
+//			//FIXME index-test
+
 			if(ROUTING.new_bundle(bundle_number) < 0){
 				LOG(LOGD_DTN, LOG_AGENT, LOGL_ERR, "routing reports error when announcing new bundle %lu", *bundle_number);
 				continue;

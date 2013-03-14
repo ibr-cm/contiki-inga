@@ -37,12 +37,11 @@
 
 //FIXME dummy index block
 static struct bundle_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
-static uint8_t temp_index_array_toggle = 0;
 static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 
 //      * index_newest_block
 //      storage_cached_get_index_block()
-//static uint8_t last_index_entry = BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS+1;
+static uint8_t last_index_entry = 0;
 /** Last written block with index data, initialized with invalid value */  //FIXME this replaces temp_index_array
 //static uint8_t last_index_block_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
 
@@ -223,6 +222,131 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 }
 
 /**
+ * \brief adds index entry
+ */
+uint8_t storage_mmem_add_index_entry(uint32_t ID, uint32_t TargetNode){
+    printf("storage_mmem_add_index_entry: ID: %lu, Target: %lu\n", ID, TargetNode); //FIXME
+    //FIXME in dem Moment, in dem die gültige Adresse feststeht
+    uint8_t i;
+    for(i=last_index_entry; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+        if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
+            temp_index_array[i].bundle_num = ID;
+            temp_index_array[i].dst_node = TargetNode;
+            last_index_entry = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/**
+ * \brief finds index entry for ID, overwrites it with last_index_entry
+ */
+uint8_t storage_mmem_del_index_entry(uint32_t ID){
+    printf("storage_mmem_del_index_entry: ID: %lu\n", ID); //FIXME
+    uint8_t i;
+    for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
+        if(temp_index_array[i].bundle_num == ID){
+            temp_index_array[i].bundle_num = temp_index_array[last_index_entry].bundle_num;
+            temp_index_array[i].dst_node = temp_index_array[last_index_entry].dst_node;
+            temp_index_array[last_index_entry].bundle_num = 0;
+            temp_index_array[last_index_entry].dst_node = 0;
+            if(last_index_entry != 0){
+                --last_index_entry;
+            }
+            return 1;
+        }
+    }
+    return 0;
+
+}
+
+/**
+ * \brief Get the bundle list
+ * \returns pointer to first bundle list entry
+ */
+struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
+
+    //FIXME nur 1 block...
+    if(blocknr != 1){
+        return NULL;
+    }
+
+    //FIXME Liste leer
+    if(temp_index_array[0].bundle_num == 0 && temp_index_array[0].dst_node == 0){
+        return NULL;
+    }
+
+    int ret;
+    struct bundle_slot_t *bs;
+    struct bundle_index_entry_t *index_start;
+
+    bs = bundleslot_get_free();
+
+    if( bs == NULL ) {
+        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate slot for a bundle");
+        return NULL;
+    }
+
+    //FIXME
+    //ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
+    ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
+    if (!ret) {
+        bundleslot_free(bs);
+        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate memory for a bundle");
+        return NULL;
+    }
+
+    index_start = (struct bundle_index_entry_t *) MMEM_PTR(&bs->bundle);
+    //memset(index_block, 0, sizeof(struct bundle_t));
+    //memset(index_start, 0, MIN_BUNDLESLOT_SIZE);
+    memcpy(index_start, temp_index_array, MIN_BUNDLESLOT_SIZE);
+
+    //get "next" index block from cache
+    //struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_partition(CACHE_PARTITION_NEXT_BLOCK, CACHE_PARTITION_B_INDEX_START, last_index_block_address);
+
+//    uint8_t i;
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
+//      temp_index_array[i].bundle_num=i+1; //FIXME ID
+//      temp_index_array[i].dst_node=i+1;  //FIXME Zielnode
+//    }
+//
+//    //FIXME nur bei RAM-Block nötig
+//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
+//          if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
+//              *index_array_entrys = i-1;
+//              break;
+//          }
+//    }
+//
+//
+// TEST
+//  int main(void){
+//          struct storage_index_entry_t *array_ptr = NULL;
+//          int array_length = 0;
+//          array_ptr = storage_cached_get_bundles(STORAGE_CACHED_GET_BUNDLES_HEAD, &array_length);
+//
+//          int i;
+//          for(i=0; i<array_length; ++i){
+//                  printf("Bundle[%d] : [ID] %d : [Dest] %d\n",i,array_ptr[i].bundle_num,array_ptr[i].dst_node);
+//          }
+//          return 0;
+//  }
+
+    //return temp_index_array;
+
+    //FIXME Beim 2. - n. Aufruf: Array 2 - n
+    //      Dann 1mal länge 0
+    //      Dann wieder von vorne
+    //      Blockiert bis zum nächsten read den entsprechenden Cacheblock, d.h. Liste muss komplett durchlaufen werden
+    //      state pro aufrufer?
+    //      freigeben von liste?
+    //      Kümmert sich um das Nachladen vom Flash
+
+    return &bs->bundle;
+}
+
+/**
  * \brief saves a bundle in storage
  * \param bundlemem pointer to the bundle
  * \param bundle_number_ptr pointer where the bundle number will be stored (on success)
@@ -302,7 +426,12 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
     if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
+        //FIXME !!!
+#ifndef TEST_NO_NETWORK
         process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
+#endif
+        /* Add index entry*/
+        storage_mmem_add_index_entry(bundle->bundle_num, bundle->dst_node);
     }
 
 	return 1;
@@ -310,6 +439,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 uint8_t storage_mmem_delete_bundle_by_index_entry(struct bundle_index_entry_t *index_entry){
     storage_mmem_delete_bundle_by_bundle_number(index_entry->bundle_num); //FIXME oder so
+    storage_mmem_del_index_entry(index_entry->bundle_num);
     //FIXME indexeintrag löschen
     return 1;
 }
@@ -359,6 +489,9 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 	//FIXME das auch
 	// Notified the agent, that a bundle has been deleted
 	agent_delete_bundle(bundle_number);
+
+	//FIXME übergangsweise auch hier, eigentlich nur in gc oder storage_mmem_delete_bundle_by_index_entry()
+    storage_mmem_del_index_entry(bundle->bundle_num);
 
 	//FIXME slot trotzdem belegen, evtl. "valid"-flag
 	bundle_decrement(entry->bundle);
@@ -447,88 +580,6 @@ uint32_t storage_mmem_get_free_space()
  */
 uint16_t storage_mmem_get_bundle_count(void){
 	return bundles_in_storage;
-}
-
-/**
- * \brief Get the bundle list
- * \returns pointer to first bundle list entry
- */
-struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
-
-    int ret;
-    struct bundle_slot_t *bs;
-    struct bundle_t *index_block;
-
-    bs = bundleslot_get_free();
-
-    if( bs == NULL ) {
-        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate slot for a bundle");
-        return NULL;
-    }
-
-    //FIXME
-    //ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
-    ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
-    if (!ret) {
-        bundleslot_free(bs);
-        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate memory for a bundle");
-        return NULL;
-    }
-
-    index_block = (struct bundle_t *) MMEM_PTR(&bs->bundle);
-    //memset(index_block, 0, sizeof(struct bundle_t));
-    memset(index_block, 0, MIN_BUNDLESLOT_SIZE);
-
-    //FIXME simuliert Ende der Liste
-    if(temp_index_array_toggle == 1){
-        temp_index_array_toggle = 0;
-        return NULL;
-    } else {
-        temp_index_array_toggle = 1;
-    }
-
-    //get "next" index block from cache
-    //struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_partition(CACHE_PARTITION_NEXT_BLOCK, CACHE_PARTITION_B_INDEX_START, last_index_block_address);
-
-//    uint8_t i;
-//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
-//      temp_index_array[i].bundle_num=i+1; //FIXME ID
-//      temp_index_array[i].dst_node=i+1;  //FIXME Zielnode
-//    }
-//
-//    //FIXME nur bei RAM-Block nötig
-//    for(i=0; i<BUNDLE_STORAGE_INDEX_ENTRYS; ++i){
-//          if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
-//              *index_array_entrys = i-1;
-//              break;
-//          }
-//    }
-//
-//
-// TEST
-//  int main(void){
-//          struct storage_index_entry_t *array_ptr = NULL;
-//          int array_length = 0;
-//          array_ptr = storage_cached_get_bundles(STORAGE_CACHED_GET_BUNDLES_HEAD, &array_length);
-//
-//          int i;
-//          for(i=0; i<array_length; ++i){
-//                  printf("Bundle[%d] : [ID] %d : [Dest] %d\n",i,array_ptr[i].bundle_num,array_ptr[i].dst_node);
-//          }
-//          return 0;
-//  }
-
-    //return temp_index_array;
-
-    //FIXME Beim 2. - n. Aufruf: Array 2 - n
-    //      Dann 1mal länge 0
-    //      Dann wieder von vorne
-    //      Blockiert bis zum nächsten read den entsprechenden Cacheblock, d.h. Liste muss komplett durchlaufen werden
-    //      state pro aufrufer?
-    //      freigeben von liste?
-    //      Kümmert sich um das Nachladen vom Flash
-
-    return &bs->bundle;
 }
 
 uint8_t storage_mmem_housekeeping(uint16_t time){
