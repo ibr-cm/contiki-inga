@@ -101,7 +101,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 	/* Register our endpoint to receive bundles */
 	reg.status = APP_ACTIVE;
 	reg.application_process = PROCESS_CURRENT();
-	reg.app_id = 25;
+	reg.app_id = REG_SENDER_APP_ID;
 	process_post(&agent_process, dtn_application_registration_event,&reg);
 
 	/* Profile initialization separately */
@@ -133,6 +133,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 
 	while(1) {
 		/* Wait for the next incoming event */
+	    //FIXME without this, bundle generation is too fast!?
 		PROCESS_WAIT_EVENT();
 
 		/* Check for timeout */
@@ -168,14 +169,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		}
 
 		/* Wait for the agent to process our outgoing bundle */
-		if( ev != dtn_bundle_stored && ev != dtn_bundle_store_failed && ev != PROCESS_EVENT_CONTINUE ) {
-			continue;
-		}
-
-		if( ev == dtn_bundle_store_failed ) {
-			/* Sending the last bundle failed, do not send this time round */
-			bundles_sent--;
-			process_post(&udtn_sender_process, PROCESS_EVENT_CONTINUE, NULL);
+		if( ev != PROCESS_EVENT_CONTINUE ) {
 			continue;
 		}
 
@@ -212,11 +206,16 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		for(i=0; i<80; i++)
 			userdata[i] = i;
 		n = bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 80);
-		if( !n ) {
+		if( n != 80 ) { //FIXME
+            /* Sending the last bundle failed, do not send this time round */
+            //bundles_sent--;
+		    //FIXME das sollte reichen...
 			printf("not enough room for block\n");
 			bundle_decrement(bundle_outgoing);
 			continue;
 		}
+
+        process_post(&udtn_sender_process, PROCESS_EVENT_CONTINUE, NULL);
 
 		bundles_sent++;
 		/* Show progress every 50 bundles */

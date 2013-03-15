@@ -48,11 +48,11 @@ process_event_t dtn_processing_finished;
 /**
  * \brief Event tell the service, that the outgoing bundle has reached save grounds
  */
-process_event_t dtn_bundle_stored;
+//process_event_t dtn_bundle_stored;  //FIXME not needed anymore
 /**
  * \brief Event tell the service, that the outgoing bundle could not be saved
  */
-process_event_t dtn_bundle_store_failed;
+//process_event_t dtn_bundle_store_failed;  //FIXME not needed anymore
 
 #ifndef APP_ACTIVE
 #define APP_ACTIVE	1

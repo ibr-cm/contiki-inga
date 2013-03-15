@@ -7,7 +7,7 @@ tests:
         programdir: examples/uDTN/storage-test
         program: uDTN-storage-test
         instrument: [examples/uDTN/storage-test/uDTN-storage-test.c,platform/inga/*.c,core/net/uDTN/*.c]
-        debug: []
+        debug: [examples/uDTN/storage-test/uDTN-storage-test.c,core/net/uDTN/*.c]
         cflags: "-fno-inline -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DTEST_NO_NETWORK=1"
         graph_options: ""
   - name: storage-default-uninstr

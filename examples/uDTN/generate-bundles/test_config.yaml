@@ -6,8 +6,8 @@ tests:
       - name: receiver
         programdir: examples/uDTN/generate-bundles
         program: uDTN-generate-bundles
-        instrument: [examples/uDTN/generate-bundles/uDTN-generate-bundles.c,core/net/uDTN/bundle.c,core/net/uDTN/sdnv.c]
-        debug: [core/net/uDTN/bundle.c,core/net/uDTN/storage_mmem.c,examples/uDTN/generate-bundles/uDTN-generate-bundles.c]
+        instrument: [examples/uDTN/generate-bundles/uDTN-generate-bundles.c,core/net/uDTN/*.c]
+        debug: []
         cflags: "-fno-inline -DDATASIZE=20 -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DTEST_NO_NETWORK=1"
         graph_options: ""
   - name: generate-bundles-80
@@ -18,7 +18,7 @@ tests:
         program: uDTN-generate-bundles
         instrument: [examples/uDTN/generate-bundles/uDTN-generate-bundles.c,core/net/uDTN/bundle.c,core/net/uDTN/sdnv.c]
         debug: []
-        cflags: "-fno-inline -DDATASIZE=80 -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        cflags: "-fno-inline -DDATASIZE=80 -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DTEST_NO_NETWORK=1"
         graph_options: ""
   - name: generate-bundles-20-uninstr
     timeout: 60
@@ -28,7 +28,7 @@ tests:
         program: uDTN-generate-bundles
         instrument: []
         debug: []
-        cflags: "-DDATASIZE=20"
+        cflags: "-DDATASIZE=20 -DTEST_NO_NETWORK=1"
         graph_options: ""
   - name: generate-bundles-80-uninstr
     timeout: 60
@@ -38,5 +38,5 @@ tests:
         program: uDTN-generate-bundles
         debug: []
         instrument: []
-        cflags: "-DDATASIZE=80"
+        cflags: "-DDATASIZE=80 -DTEST_NO_NETWORK=1"
         graph_options: ""

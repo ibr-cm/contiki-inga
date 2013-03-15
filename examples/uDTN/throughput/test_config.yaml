@@ -7,15 +7,15 @@ tests:
         programdir: examples/uDTN/throughput
         program: uDTN-sender
         instrument: [examples/uDTN/throughput/uDTN-sender.c,platform/inga/*.c,core/net/uDTN/*.c]
-        debug: []
-        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        debug: [examples/uDTN/throughput/uDTN-sender.c,core/net/uDTN/*.c]
+        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=10"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/throughput
         program: uDTN-sink
         instrument: [examples/uDTN/throughput/uDTN-sink.c,platform/inga/*.c,core/net/uDTN/*.c]
-        debug: []
-        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        debug: [examples/uDTN/throughput/uDTN-sender.c,core/net/uDTN/*.c]
+        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=10"
         cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
         graph_options: ""
   - name: throughput-uninstr

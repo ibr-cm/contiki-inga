@@ -223,7 +223,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 		return -1;
 	}
 
-    printf("cl_send: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SeqNr: %lu , LT: %lu, ID: %lu \n",
+    printf("cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 
 	/* Check if bundle has expired */

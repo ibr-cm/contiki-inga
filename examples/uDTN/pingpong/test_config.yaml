@@ -8,14 +8,31 @@ tests:
         program: uDTN-pingpong
         instrument: [examples/uDTN/pingpong/uDTN-pingpong.c,platform/inga/*.c,core/net/uDTN/*.c]
         debug: []
-        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/pingpong
         program: uDTN-pingpong
         instrument: [examples/uDTN/pingpong/uDTN-pingpong.c,platform/inga/*.c,core/net/uDTN/*.c]
         debug: []
-        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
+        graph_options: ""
+  - name: pingpong-debug
+    timeout: 900
+    devices:
+      - name: sender
+        programdir: examples/uDTN/pingpong
+        program: uDTN-pingpong
+        instrument: []
+        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
+        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
+        graph_options: ""
+      - name: receiver
+        programdir: examples/uDTN/pingpong
+        program: uDTN-pingpong
+        instrument: []
+        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
+        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
         graph_options: ""
   - name: pingpong-uninstr
     timeout: 900
@@ -43,6 +60,16 @@ tests:
         program: uDTN-pingpong
         instrument: [examples/uDTN/pingpong/uDTN-pingpong.c,platform/inga/*.c,core/net/uDTN/*.c]
         debug: []
+        cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        graph_options: ""
+  - name: pingpong-loopback-debug
+    timeout: 900
+    devices:
+      - name: receiver
+        programdir: examples/uDTN/pingpong
+        program: uDTN-pingpong
+        instrument: []
+        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
         cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
         graph_options: ""
   - name: pingpong-loopback-uninstr

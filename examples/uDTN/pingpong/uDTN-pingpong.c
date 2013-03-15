@@ -57,6 +57,13 @@
 #define MODE_ACTIVE 1
 #define MODE_LOOPBACK 2
 
+/* exit condition: number of received bundles (bundle_recvd) */
+#ifdef CONF_TEST_ITERATIONS
+#define TEST_ITERATIONS CONF_TEST_ITERATIONS
+#else
+#define TEST_ITERATIONS 1000
+#endif
+
 #ifndef CONF_MODE
 #warning "CONF_MODE not defined, this node will operate in loopback mode"
 #define CONF_MODE MODE_LOOPBACK
@@ -141,7 +148,7 @@ PROCESS_THREAD(coordinator_process, ev, data)
 
 	PROCESS_PAUSE();
 
-	printf("Starting tests\n");
+	printf("Starting tests, %d iterations\n", TEST_ITERATIONS);
 
 #if CONF_MODE == MODE_ACTIVE
 	process_start(&ping_process, NULL);
@@ -260,6 +267,7 @@ PROCESS_THREAD(ping_process, ev, data)
 				} else {
 					/* Calculate RTT */
 					bundle_recvd++;
+					printf("PING: bundle_recvd: %u\n", bundle_recvd); //FIXME
 					diff -= *u32_ptr;
 					// printf("Latency: %lu\n", diff);
 
@@ -274,7 +282,7 @@ PROCESS_THREAD(ping_process, ev, data)
 			process_post(&agent_process, dtn_processing_finished, recv);
 
 			/* We're done */
-			if (bundle_recvd >= 10)
+			if (bundle_recvd >= TEST_ITERATIONS)
 				break;
 
 			/* Send PING */
@@ -293,7 +301,7 @@ PROCESS_THREAD(ping_process, ev, data)
 	}
 
 	TEST_REPORT("timeout", timeouts, bundle_sent, "lost/sent");
-	TEST_REPORT("average latency", latency*1000/bundle_recvd, CLOCK_SECOND, "ms");
+	TEST_REPORT("average latency", latency*TEST_ITERATIONS/bundle_recvd, CLOCK_SECOND, "ms");
 
 	PROCESS_END();
 }

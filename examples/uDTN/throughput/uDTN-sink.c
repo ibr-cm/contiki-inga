@@ -172,6 +172,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 		/* Tell the agent, that we have processed the bundle */
 		process_post(&agent_process, dtn_processing_finished, bundle_incoming);
 
+		printf("Bundle received, bundles_recv++\n");
 		bundles_recv++;
 
 		/* Start counting time after the first bundle arrived */
@@ -199,10 +200,12 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			/* Add the payload */
 			userdata[0] = 'o';
 			userdata[1] = 'k';
-			bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 2);
+			if( bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 2) != 2){
+			    printf("sink: bundle_add_block: FAILED"); //FIXME
+			}
 
 			/* Wait for the agent to process our outgoing bundle */
-			PROCESS_WAIT_UNTIL(ev == dtn_bundle_stored);
+			//PROCESS_WAIT_UNTIL(ev == dtn_bundle_stored);
 
 			/* Deactivate our registration, so that we do not receive bundles anymore */
 			reg.status = 0;

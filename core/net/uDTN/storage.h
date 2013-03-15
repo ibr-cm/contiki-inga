@@ -124,6 +124,7 @@ struct storage_driver {
      * \return 0 on error, 1 on success
 	 *
 	 * creates events: dtn_bundle_stored, dtn_bundle_in_storage_event, dtn_bundle_store_failed, ...  //FIXME
+	 * FIXME: nur dtn_bundle_in_storage_event, die anderen beiden werden nicht mehr gebraucht
 	 */
 	 uint8_t (* save_bundle)(struct mmem *bundlemem, uint8_t flags);
     /**

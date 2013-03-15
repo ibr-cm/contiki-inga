@@ -346,6 +346,10 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
     return &bs->bundle;
 }
 
+//FIXME
+void same_bundle(){
+    printf("same bundle\n");
+}
 /**
  * \brief saves a bundle in storage
  * \param bundlemem pointer to the bundle
@@ -379,6 +383,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 		if( bundle->bundle_num == entrybdl->bundle_num ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "%lu is the same bundle", entry->bundle_num);
+			same_bundle(); //FIXME
 			bundle_decrement(bundlemem);
 			return 1;
 		}
@@ -422,18 +427,18 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	// This should do nothing, as we have incremented the reference counter before
 	bundle_decrement(bundlemem);
 
-    printf("save_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SeqNr: %lu , LT: %lu, ID: %lu \n",
+	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "save_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
     if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
+        /* Add index entry*/
+        storage_mmem_add_index_entry(bundle->bundle_num, bundle->dst_node);
         //FIXME !!!
 #ifdef TEST_NO_NETWORK
         printf("save_bundle: TEST_NO_NETWORK\n");
 #else
         process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
 #endif
-        /* Add index entry*/
-        storage_mmem_add_index_entry(bundle->bundle_num, bundle->dst_node);
     }
 
 	return 1;
@@ -535,7 +540,7 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 			break;
 		}
 	}
-    printf("read_done: RT: %lu , NB: %u , SN: %lu , SS: %lu , DN: %lu , DS: %lu , SeqNr: %lu , LT: %lu, ID: %lu \n",
+    printf("read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 
 	if( entry == NULL ) {
