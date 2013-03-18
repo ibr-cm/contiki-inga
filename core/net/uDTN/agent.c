@@ -154,7 +154,6 @@ PROCESS_THREAD(agent_process, ev, data)
 			uint32_t * bundle_number = (uint32_t *) data;
 
 			LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "bundle %lu in storage", *bundle_number);
-			printf("AGENT: bundle %lu in storage\n", *bundle_number); //FIXME
 
 			if(ROUTING.new_bundle(bundle_number) < 0){
 				LOG(LOGD_DTN, LOG_AGENT, LOGL_ERR, "routing reports error when announcing new bundle %lu", *bundle_number);

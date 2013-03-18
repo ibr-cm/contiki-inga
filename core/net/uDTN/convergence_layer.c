@@ -205,7 +205,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 
 	/* Read the bundle from storage, if it is not in memory */
 	if( ticket->bundle == NULL ) {
-	    printf("cl_rb: "); //FIXME
+	    //printf("cl_rb: "); //FIXME
 		ticket->bundle = BUNDLE_STORAGE.read_bundle(ticket->bundle_number,0,0); //FIXME
 		if( ticket->bundle == NULL ) {
 			LOG(LOGD_DTN, LOG_CL, LOGL_ERR, "Unable to read bundle %lu", ticket->bundle_number);
@@ -222,9 +222,6 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 		ticket->bundle = NULL;
 		return -1;
 	}
-
-    printf("cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
-            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 
 	/* Check if bundle has expired */
 	if( bundle->lifetime == 0 ) {
@@ -289,7 +286,10 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 
 	/* And send it out */
 	dtn_network_send(&ticket->neighbour, length, (void *) ticket);
-printf("CL: sent -------------------------------------------------------------------------------\n"); //FIXME
+
+	LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
+
 	return 1;
 }
 
@@ -422,7 +422,6 @@ int convergence_layer_resend_ack(struct transmit_ticket_t * ticket)
 
 int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, uint8_t length, uint8_t flags, uint8_t sequence_number)
 {
-    printf("parse dataframe\n"); //FIXME
 	struct mmem * bundlemem = NULL;
 	struct bundle_t * bundle = NULL;
 	int n;
@@ -450,7 +449,7 @@ int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, ui
 	/* Mark the bundle as "internal" */
 	bundle->source_process = &agent_process;
 
-	LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "Bundle %lu received from %u.%u with SeqNo %u", bundle->bundle_num, source->u8[0], source->u8[1], sequence_number);
+	LOG(LOGD_DTN, LOG_CL, LOGL_INF, "Bundle %lu received from %u.%u with SeqNo %u", bundle->bundle_num, source->u8[0], source->u8[1], sequence_number);
 
 	/* Store the node from which we received the bundle */
 	rimeaddr_copy(&bundle->msrc, source);

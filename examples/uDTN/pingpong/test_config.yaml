@@ -24,14 +24,15 @@ tests:
         programdir: examples/uDTN/pingpong
         program: uDTN-pingpong
         instrument: []
-        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
+        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/storage_mmem.c,core/net/uDTN/agent.c,core/net/uDTN/convergence_layer.c]
         cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/pingpong
         program: uDTN-pingpong
         instrument: []
-        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
+        debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/storage_mmem.c,core/net/uDTN/agent.c,core/net/uDTN/convergence_layer.c]
+        #debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
         cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
         graph_options: ""
   - name: pingpong-uninstr

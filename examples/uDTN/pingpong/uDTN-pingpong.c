@@ -46,6 +46,7 @@
 #include "watchdog.h"
 #include "sys/test.h"
 #include "sys/profiling.h"
+#include "logging.h"
 
 #include "net/uDTN/bundle.h"
 #include "net/uDTN/agent.h"
@@ -87,14 +88,6 @@
 #define PAYLOAD_LEN 80
 #endif
 
-#define DEBUG 1
-#if DEBUG
-#include <stdio.h>
-#define PRINTF(...) printf(__VA_ARGS__)
-#else
-#define PRINTF(...)
-#endif
-
 #define REG_PING_APP_ID 5
 #define REG_PONG_APP_ID 7
 
@@ -123,7 +116,7 @@ static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32
 
 	bundlemem = bundle_new_bundle(dest, dst_srv, src_srv, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 	if (!bundlemem) {
-		printf("create_bundle failed\n");
+	    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "create_bundle failed");
 		return 0;
 	}
 
@@ -148,7 +141,7 @@ PROCESS_THREAD(coordinator_process, ev, data)
 
 	PROCESS_PAUSE();
 
-	printf("Starting tests, %d iterations\n", TEST_ITERATIONS);
+    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "Starting tests, %d iterations", TEST_ITERATIONS);
 
 #if CONF_MODE == MODE_ACTIVE
 	process_start(&ping_process, NULL);
@@ -201,7 +194,7 @@ PROCESS_THREAD(ping_process, ev, data)
 	etimer_set(&timer,  CLOCK_SECOND);
 	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
 
-	printf("PING: Init done, starting test\n");
+    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: Init done, starting test");
 
 	/* Transfer */
 	while(1) {
@@ -215,12 +208,12 @@ PROCESS_THREAD(ping_process, ev, data)
 			/* Sync pattern */
 			if (!synced) {
 				if( sent )
-					printf("PING: Timeout waiting for sync\n");
+				    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: Timeout waiting for sync");
 				sent = 1;
 				*u32_ptr = 0xfdfdfdfd;
 			} else {
 				timeouts++;
-				printf("PING: Timeouts: %u\n", timeouts);
+				LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: Timeouts: %u\n", timeouts);
 				*u32_ptr = get_time();
 			}
 
@@ -228,9 +221,9 @@ PROCESS_THREAD(ping_process, ev, data)
 				userdata[i] = i;
 			}
 
-			PRINTF("PING: send sync\n");
+			LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: send sync");
 			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)){
-	            printf("bundle_convenience: SUCCESS\n"); //FIXME
+                //LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_DBG, "bundle_convenience: SUCCESS"); //FIXME
 			}
 
 		}
@@ -239,7 +232,7 @@ PROCESS_THREAD(ping_process, ev, data)
 			/* We received a bundle - handle it */
 			recv = (struct mmem *) data;
 
-			PRINTF("PING: recv\n");
+            LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: recv");
 
 			diff = get_time();
 
@@ -247,7 +240,7 @@ PROCESS_THREAD(ping_process, ev, data)
 			block = bundle_get_payload_block(recv);
 
 			if( block == NULL ) {
-				printf("PING: No Payload\n");
+	            LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: No Payload");
 			} else {
 				u32_ptr = (uint32_t *)block->payload;
 
@@ -255,9 +248,9 @@ PROCESS_THREAD(ping_process, ev, data)
 					/* We're synced */
 					if (*u32_ptr == 0xfdfdfdfd) {
 						synced = 1;
-						printf("PING: synced\n");
+		                LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: synced");
 					} else {
-						printf("PING: received initial bundle but with broken payload\n");
+		                LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: received initial bundle but with broken payload");
 
 						// Tell the agent, that we have processed the bundle
 						process_post(&agent_process, dtn_processing_finished, recv);
@@ -267,12 +260,13 @@ PROCESS_THREAD(ping_process, ev, data)
 				} else {
 					/* Calculate RTT */
 					bundle_recvd++;
-					printf("PING: bundle_recvd: %u\n", bundle_recvd); //FIXME
+
 					diff -= *u32_ptr;
 					// printf("Latency: %lu\n", diff);
 
+                    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_DBG, "PING: %u", bundle_recvd);
 					if (bundle_recvd % 50 == 0)
-						printf("PING: %u\n", bundle_recvd);
+                        LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: %u", bundle_recvd);
 
 					latency += diff;
 				}
@@ -292,9 +286,9 @@ PROCESS_THREAD(ping_process, ev, data)
 				userdata[i] = i;
 			}
 
-			PRINTF("PING: send ping\n");
+			LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PING: send ping");
 			if (bundle_convenience(CONF_DEST_NODE, REG_PONG_APP_ID, REG_PING_APP_ID, userdata, PAYLOAD_LEN)) {
-			    printf("bundle_convenience: SUCCESS\n"); //FIXME
+                //LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_DBG, "bundle_convenience: SUCCESS"); //FIXME
 				bundle_sent++;
 			}
 		}
@@ -321,14 +315,14 @@ PROCESS_THREAD(pong_process, ev, data)
 	/* Register our endpoint */
 	reg_pong.status = APP_ACTIVE;
 	reg_pong.application_process = PROCESS_CURRENT();
-	reg_pong.app_id = 7;
+	reg_pong.app_id = REG_PONG_APP_ID;
 	process_post(&agent_process, dtn_application_registration_event, &reg_pong);
 
 	/* Wait a second */
 	etimer_set(&timer,  CLOCK_SECOND);
 	PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
 
-	printf("PONG: Init done, starting responder\n");
+    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: Init done, starting responder");
 
 	/* Transfer */
 	while(1) {
@@ -343,7 +337,7 @@ PROCESS_THREAD(pong_process, ev, data)
 
 		/* Check sender */
 		if (tmp != CONF_DEST_NODE) {
-			printf("PONG: Bundle from different node.\n");
+		    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: Bundle from different node");
 
 			// Tell the agent, that we have processed the bundle
 			process_post(&agent_process, dtn_processing_finished, recv);
@@ -351,22 +345,22 @@ PROCESS_THREAD(pong_process, ev, data)
 			continue;
 		}
 
-		PRINTF("PONG: recv\n");
+		LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: recv");
 
 		/* Verify the content of the bundle */
 		block = bundle_get_payload_block(recv);
 		int i;
 
 		if( block == NULL ) {
-			printf("PONG: Payload: no block\n");
+            LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: Payload: no block");
 		} else {
 			if( block->block_size != PAYLOAD_LEN ) {
-				printf("PONG: Payload: length is %d, should be %d\n", block->block_size, PAYLOAD_LEN);
+	            LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: Payload: length is %d, should be %d", block->block_size, PAYLOAD_LEN);
 			}
 
 			for(i=4; i<PAYLOAD_LEN; i++) {
 				if( block->payload[i] != i ) {
-					printf("PONG: Payload: byte %d mismatch. Should be %02X, is %02X\n", i, i, block->payload[i]);
+		            LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: Payload: byte %d mismatch. Should be %02X, is %02X", i, i, block->payload[i]);
 				}
 			}
 		}
@@ -377,14 +371,14 @@ PROCESS_THREAD(pong_process, ev, data)
 		process_post(&agent_process, dtn_processing_finished, recv);
 
 		/* Send PONG */
-		PRINTF("PONG: send\n");
+		LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: send");
 		if (bundle_convenience(CONF_DEST_NODE, REG_PING_APP_ID, REG_PONG_APP_ID, (uint8_t *) u32_ptr, 4)){
-            printf("bundle_convenience: SUCCESS\n"); //FIXME
+            //LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_DBG, "bundle_convenience: SUCCESS"); //FIXME
 		}
 
 		bundle_sent++;
 		if (bundle_sent % 50 == 0)
-			printf("PONG: %u\n", bundle_sent);
+		    LOG(LOGD_DTN, LOG_EXAMPLE, LOGL_INF, "PONG: %u", bundle_sent);
 	}
 	PROCESS_END();
 }

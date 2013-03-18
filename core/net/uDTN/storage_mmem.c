@@ -139,7 +139,6 @@ void storage_mmem_prune()
 
 		if( bundle->lifetime < elapsed_time ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "bundle lifetime expired of bundle %lu", entry->bundle_num);
-            printf("PRUNE: bundle lifetime expired of bundle %lu\n", entry->bundle_num); //FIXME
 			storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
 		}
 	}
@@ -225,7 +224,7 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
  * \brief adds index entry
  */
 uint8_t storage_mmem_add_index_entry(uint32_t ID, uint32_t TargetNode){
-    printf("storage_mmem_add_index_entry: ID: %lu, Target: %lu\n", ID, TargetNode); //FIXME
+    //printf("storage_mmem_add_index_entry: ID: %lu, Target: %lu\n", ID, TargetNode); //FIXME
     //FIXME in dem Moment, in dem die gültige Adresse feststeht
     uint8_t i;
     for(i=last_index_entry; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
@@ -243,7 +242,7 @@ uint8_t storage_mmem_add_index_entry(uint32_t ID, uint32_t TargetNode){
  * \brief finds index entry for ID, overwrites it with last_index_entry
  */
 uint8_t storage_mmem_del_index_entry(uint32_t ID){
-    printf("storage_mmem_del_index_entry: ID: %lu\n", ID); //FIXME
+    //printf("storage_mmem_del_index_entry: ID: %lu\n", ID); //FIXME
     uint8_t i;
     for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
         if(temp_index_array[i].bundle_num == ID){
@@ -427,15 +426,15 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	// This should do nothing, as we have incremented the reference counter before
 	bundle_decrement(bundlemem);
 
-	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "save_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
-            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
+	/*LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "save_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);*/ //FIXME
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
     if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
         /* Add index entry*/
         storage_mmem_add_index_entry(bundle->bundle_num, bundle->dst_node);
         //FIXME !!!
 #ifdef TEST_NO_NETWORK
-        printf("save_bundle: TEST_NO_NETWORK\n");
+        LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "save_bundle: TEST_NO_NETWORK\n");
 #else
         process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
 #endif
@@ -462,7 +461,6 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 	struct bundle_list_entry_t * entry = NULL;
 
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "Deleting Bundle %lu", bundle_number);
-    printf("Deleting Bundle %lu\n", bundle_number); //FIXME
 
 	// Look for the bundle we are talking about
 	for(entry = list_head(bundle_list);
@@ -540,8 +538,8 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 			break;
 		}
 	}
-    printf("read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
-            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
+	/*LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);*/ //FIXME
 
 	if( entry == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "Could not find bundle %lu in storage_mmem_read_bundle", bundle_num);
