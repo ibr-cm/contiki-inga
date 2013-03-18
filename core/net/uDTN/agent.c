@@ -39,7 +39,7 @@
 
 #include "agent.h"
 
-//FIXME das war nur für dtn_send_bundle_event?
+//FIXME
 //static struct mmem * bundleptr;
 uint32_t dtn_node_id;
 uint32_t dtn_seq_nr;
@@ -167,8 +167,12 @@ PROCESS_THREAD(agent_process, ev, data)
 	    if(ev == dtn_processing_finished) {
 	    	// data should contain the bundlemem ptr
 	    	struct mmem * bundlemem = (struct mmem *) data;
+
+            struct bundle_t *bundle;
+            bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+
 	    	//FIXME
-	    	printf("AGENT: dtn_processing_finished / locally_delivered\n");
+            printf("AGENT: dtn_processing_finished / locally_delivered: ID: %lu\n", bundle->bundle_num);
 
 	    	// Notify routing, that service has finished processing a bundle
 	    	ROUTING.locally_delivered(bundlemem);

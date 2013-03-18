@@ -517,7 +517,7 @@ int routing_flooding_new_bundle(uint32_t * bundle_number)
 	}
 
 	// Now go and request the bundle from storage
-    printf("routing_nb_rb: "); //FIXME
+    //printf("routing_nb_rb: "); //FIXME
 	bundlemem = BUNDLE_STORAGE.read_bundle(*bundle_number,0,0);
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_ROUTE, LOGL_ERR, "unable to read bundle %lu", *bundle_number);
@@ -806,7 +806,7 @@ PROCESS_THREAD(routing_process, ev, data)
 {
 	PROCESS_BEGIN();
 
-	LOG(LOGD_DTN, LOG_ROUTE, LOGL_INF, "FLOOD ROUTE process in running");
+	LOG(LOGD_DTN, LOG_ROUTE, LOGL_INF, "FLOOD ROUTE process is running");
 
 	// Initialize memory used to store blacklisted neighbours
 	memb_init(&blacklist_mem);

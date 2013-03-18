@@ -181,7 +181,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 		}
 
 		if (bundles_recv%50 == 0)
-			printf("%u\n", bundles_recv);
+			printf("Received Bundles: %u\n", bundles_recv);
 
 		/* Report profiling data after receiving BUNDLES bundles
 		   Ideally seq. no 0-999 */
@@ -204,6 +204,8 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			    printf("sink: bundle_add_block: FAILED"); //FIXME
 			}
 
+			//FIXME sender is too fast
+			//dtn_nw_disable_input();
 			/* Wait for the agent to process our outgoing bundle */
 			//PROCESS_WAIT_UNTIL(ev == dtn_bundle_stored);
 

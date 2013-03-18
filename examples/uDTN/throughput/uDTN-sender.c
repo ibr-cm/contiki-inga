@@ -120,7 +120,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 	etimer_set(&timer, CLOCK_SECOND);
 	PROCESS_WAIT_UNTIL(etimer_expired(&timer));
 
-	printf("Init done, starting test\n");
+	printf("Init done, starting test with %d bundles\n", BUNDLES);
 
 	profiling_init();
 	profiling_start();
@@ -220,7 +220,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		bundles_sent++;
 		/* Show progress every 50 bundles */
 		if (bundles_sent%50 == 0)
-			printf("%i\n", bundles_sent);
+			printf("Sent Bundles: %i\n", bundles_sent);
 	}
 	PROCESS_END();
 }

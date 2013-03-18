@@ -65,8 +65,7 @@ void agent_delete_bundle(uint32_t bundle_number);
 #define LOG_SLOTS  		5
 #define LOG_AGENT  		6
 #define LOG_CL	   		7
-#define LOG_DISCOVERY		8
-#define LOG_EXAMPLE		9
+#define LOG_DISCOVERY	8
 #endif
 
 /** @} */

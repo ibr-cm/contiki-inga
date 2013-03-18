@@ -287,7 +287,7 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 	/* And send it out */
 	dtn_network_send(&ticket->neighbour, length, (void *) ticket);
 
-	LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
+	printf("cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 
 	return 1;
@@ -422,6 +422,8 @@ int convergence_layer_resend_ack(struct transmit_ticket_t * ticket)
 
 int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, uint8_t length, uint8_t flags, uint8_t sequence_number)
 {
+    LOG(LOGD_DTN, LOG_CL, LOGL_INF, "Bundle (?) received %p from %u.%u with flags %02X, sequence_number: %u", payload, source->u8[0], source->u8[1], flags, sequence_number);
+
 	struct mmem * bundlemem = NULL;
 	struct bundle_t * bundle = NULL;
 	int n;
@@ -457,6 +459,7 @@ int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, ui
 	/* Notify the discovery module, that we have seen a peer */
 	DISCOVERY.alive(source);
 
+	//FIXME warten bis komplett in storage?!
 	/* Hand over the bundle to dispatching */
 	n = dispatching_dispatch_bundle(bundlemem);
 	bundlemem = NULL;
@@ -538,6 +541,7 @@ int convergence_layer_incoming_frame(rimeaddr_t * source, uint8_t * payload, uin
 	uint8_t header;
 
 	LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "Incoming frame from %u.%u", source->u8[0], source->u8[1]);
+    printf("Incoming frame from %u.%u\n", source->u8[0], source->u8[1]); //FIXME
 
 	/* Check the COMPAT information */
 	if( (payload[0] & CONVERGENCE_LAYER_MASK_COMPAT) != CONVERGENCE_LAYER_COMPAT ) {

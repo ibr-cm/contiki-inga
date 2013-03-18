@@ -180,7 +180,8 @@ int dispatching_dispatch_bundle(struct mmem *bundlemem) {
 
 	// Now we have to send an event to our daemon
 	if( n ) {
-		process_post(&agent_process, dtn_bundle_in_storage_event, bundle_number);
+	    printf("dispatching done\n"); //FIXME
+		//process_post(&agent_process, dtn_bundle_in_storage_event, bundle_number);
 		return 1;
 	}
 

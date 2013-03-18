@@ -17,6 +17,6 @@ tests:
         programdir: examples/mmem-test
         program: mmem-test
         instrument: []
-        debug: [examples/mmem-test/mmem-test.c]
+        debug: []
         cflags: ""
         graph_options: ""

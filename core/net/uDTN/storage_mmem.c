@@ -426,8 +426,9 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	// This should do nothing, as we have incremented the reference counter before
 	bundle_decrement(bundlemem);
 
-	/*LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "save_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
-            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);*/ //FIXME
+	LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "save_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
+
 	//FIXME für letztes storage segment, agent mitteilen, dass wir alles haben
     if( flags == STORAGE_NO_SEGMENT || flags == STORAGE_LAST_SEGMENT ) {
         /* Add index entry*/
@@ -538,8 +539,8 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 			break;
 		}
 	}
-	/*LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
-            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);*/ //FIXME
+	LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
 
 	if( entry == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "Could not find bundle %lu in storage_mmem_read_bundle", bundle_num);

@@ -135,6 +135,11 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
 
     /* calculate & set bundle_num*/
     bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
+
+    //FIXME
+    printf("bundle_new_bundle: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu\n",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
+
     return bundlemem;
 }
 
@@ -427,10 +432,18 @@ struct mmem *bundle_recover_bundle(uint8_t *buffer, int size)
 	/* calculate & set bundle_num*/
 	bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
+	//FIXME
+	printf("bundle_recover_bundle: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu\n",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
+
 	/* FIXME: Loop around and decode all blocks - does this work? */
 	while (size-offs > 1) {
 		offs += bundle_decode_block(bundlemem, &buffer[offs], size-offs);
 	}
+
+    //FIXME
+    // Save the bundle in storage
+	//BUNDLE_STORAGE.save_bundle(bundlemem, STORAGE_NO_SEGMENT);
 
 	return bundlemem;
 
@@ -686,5 +699,9 @@ rimeaddr_t convert_eid_to_rime(uint32_t eid) {
 uint32_t convert_rime_to_eid(rimeaddr_t * dest) {
 	uint32_t eid = 0;
 	eid = (dest->u8[1] & 0xFF) + ((dest->u8[0] & 0xFF) << 8);
+
+    LOG(LOGD_DTN, LOG_BUNDLE, LOGL_DBG, "converting rimeaddr %u.%u to eid %lu", dest->u8[0], dest->u8[1], eid);
+    printf("converting rimeaddr %u.%u to eid %lu\n", dest->u8[0], dest->u8[1], eid); //FIXME
+
 	return eid;
 }
