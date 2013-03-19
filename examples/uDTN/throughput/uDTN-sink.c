@@ -205,7 +205,9 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			}
 
 			//FIXME sender is too fast
-			//dtn_nw_disable_input();
+			//FIXME used in examples/uDTN/throughput/uDTN-sink.c
+			//FIXME to avoid dos by examples/uDTN/throughput/uDTN-sender.c
+			dtn_nw_disable_input();
 			/* Wait for the agent to process our outgoing bundle */
 			//PROCESS_WAIT_UNTIL(ev == dtn_bundle_stored);
 
