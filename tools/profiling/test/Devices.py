@@ -278,9 +278,12 @@ class INGA(Device):
 			output = subprocess.check_output(["make", "TARGET=inga", "MOTES=%s"%(self.path), "%s.upload"%(self.program)], stderr=subprocess.STDOUT)
 			self.binary = os.path.join(self.logdir, "%s-%s"%(self.name, self.program))
 			shutil.copyfile("%s.inga"%(self.program), self.binary)
+			self.logger.debug(output)
+			
+			#FIXME print static RAM usage
 			output2 = subprocess.check_output(["static_size.sh", self.binary], stderr=subprocess.STDOUT)
 			self.logger.info(output2)
-			self.logger.debug(output)
+
 		except subprocess.CalledProcessError as err:
 			self.logger.error(err)
 			self.logger.error(err.output)
