@@ -103,7 +103,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 	watchdog_stop();
 	profiling_report("init", 0);
 	watchdog_start();
-	printf("Init done, starting test\n");
+    printf("Init done, starting test with %d bundles\n", BUNDLES);
 
 	profiling_init();
 	profiling_start();

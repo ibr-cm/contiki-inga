@@ -88,7 +88,6 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 	static uint16_t bundles_sent = 0;
 	static uint32_t time_start, time_stop;
 	uint8_t userdata[80];
-	uint32_t tmp;
 	static struct mmem * bundle_outgoing;
 
 	PROCESS_BEGIN();
@@ -195,6 +194,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 			continue;
 		}
 #if REPORT
+	    uint32_t tmp;
 		/* Bundle flags */
 		tmp=BUNDLE_FLAG_SINGLETON;
 		/* Enable bundle delivery report */
