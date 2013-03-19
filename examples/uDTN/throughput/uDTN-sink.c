@@ -95,7 +95,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 	/* Register our endpoint to receive bundles */
 	reg.status = APP_ACTIVE;
 	reg.application_process = PROCESS_CURRENT();
-	reg.app_id = 25;
+	reg.app_id = REG_SINK_APP_ID;
 	process_post(&agent_process, dtn_application_registration_event, &reg);
 
 	/* Profile initialization separately */
@@ -172,7 +172,6 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 		/* Tell the agent, that we have processed the bundle */
 		process_post(&agent_process, dtn_processing_finished, bundle_incoming);
 
-		printf("Bundle received, bundles_recv++\n");
 		bundles_recv++;
 
 		/* Start counting time after the first bundle arrived */
@@ -180,7 +179,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			time_start = test_precise_timestamp(NULL);
 		}
 
-		if (bundles_recv%50 == 0)
+		//if (bundles_recv%50 == 0)
 			printf("Received Bundles: %u\n", bundles_recv);
 
 		/* Report profiling data after receiving BUNDLES bundles
@@ -189,6 +188,8 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			leds_off(1);
 			profiling_stop();
 			time_stop = test_precise_timestamp(NULL);
+
+			printf("sink done\n");
 
 			bundle_outgoing = bundle_new_bundle(tmp, REG_SENDER_APP_ID, REG_SINK_APP_ID, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 

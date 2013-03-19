@@ -208,8 +208,6 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		n = bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 80);
 		if( n != 80 ) { //FIXME
             /* Sending the last bundle failed, do not send this time round */
-            //bundles_sent--;
-		    //FIXME das sollte reichen...
 			printf("not enough room for block\n");
 			bundle_decrement(bundle_outgoing);
 			continue;
@@ -219,7 +217,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 
 		bundles_sent++;
 		/* Show progress every 50 bundles */
-		if (bundles_sent%50 == 0)
+		//if (bundles_sent%50 == 0)
 			printf("Sent Bundles: %i\n", bundles_sent);
 	}
 	PROCESS_END();
