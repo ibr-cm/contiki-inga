@@ -7,7 +7,17 @@ tests:
         programdir: examples/mmem-test
         program: mmem-test
         instrument: [examples/mmem-test/mmem-test.c,core/lib/mmem.c]
-        debug: [examples/mmem-test/mmem-test.c]
+        debug: []
+        cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        graph_options: ""
+  - name: mmem-debug
+    timeout: 60
+    devices:
+      - name: receiver
+        programdir: examples/mmem-test
+        program: mmem-test
+        instrument: []
+        debug: [examples/mmem-test/mmem-test.c,core/net/uDTN/*.c]
         cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
         graph_options: ""
   - name: mmem-test-uninstr

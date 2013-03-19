@@ -10,6 +10,16 @@ tests:
         debug: []
         cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
         graph_options: ""
+  - name: hash-debug
+    timeout: 900
+    devices:
+      - name: receiver
+        programdir: examples/uDTN/hash-test
+        program: uDTN-hash-test
+        instrument: []
+        debug: [examples/uDTN/hash-test/uDTN-hash-test.c]
+        cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        graph_options: ""
   - name: hash-uninstr
     timeout: 900
     devices:

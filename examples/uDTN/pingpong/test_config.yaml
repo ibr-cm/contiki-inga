@@ -8,14 +8,14 @@ tests:
         program: uDTN-pingpong
         instrument: [examples/uDTN/pingpong/uDTN-pingpong.c,platform/inga/*.c,core/net/uDTN/*.c]
         debug: []
-        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
+        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=1000"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/pingpong
         program: uDTN-pingpong
         instrument: [examples/uDTN/pingpong/uDTN-pingpong.c,platform/inga/*.c,core/net/uDTN/*.c]
         debug: []
-        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10"
+        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=1000"
         graph_options: ""
   - name: pingpong-debug
     timeout: 900
@@ -25,7 +25,7 @@ tests:
         program: uDTN-pingpong
         instrument: []
         debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/convergence_layer.c,core/net/uDTN/routing_flooding.c]
-        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10 -DCONF_LOGLEVEL=LOGL_DBG"
+        cflags: "-fno-inline  -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=1000 -DCONF_LOGLEVEL=LOGL_DBG"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/pingpong
@@ -33,7 +33,7 @@ tests:
         instrument: []
         debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/convergence_layer.c,core/net/uDTN/routing_flooding.c]
         #debug: [examples/uDTN/pingpong/uDTN-pingpong.c,core/net/uDTN/*.c]
-        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=10 -DCONF_LOGLEVEL=LOGL_DBG"
+        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_TEST_ITERATIONS=1000 -DCONF_LOGLEVEL=LOGL_DBG"
         graph_options: ""
   - name: pingpong-uninstr
     timeout: 900
@@ -43,14 +43,14 @@ tests:
         program: uDTN-pingpong
         instrument: []
         debug: []
-        cflags: "-fno-inline -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DCONF_TEST_ITERATIONS=10"
+        cflags: "-fno-inline -DCONF_MODE=1 -DCONF_DEST_NODE=$RECEIVER -DCONF_TEST_ITERATIONS=1000"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/pingpong
         program: uDTN-pingpong
         instrument: []
         debug: []
-        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DCONF_TEST_ITERATIONS=10"
+        cflags: "-fno-inline -DCONF_MODE=0 -DCONF_DEST_NODE=$SENDER -DCONF_TEST_ITERATIONS=1000"
         graph_options: ""
 ### Test latency loopback
   - name: pingpong-loopback
