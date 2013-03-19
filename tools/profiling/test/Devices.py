@@ -279,15 +279,16 @@ class INGA(Device):
 			self.binary = os.path.join(self.logdir, "%s-%s"%(self.name, self.program))
 			shutil.copyfile("%s.inga"%(self.program), self.binary)
 			self.logger.debug(output)
-			
-			#FIXME print static RAM usage
-			output2 = subprocess.check_output(["static_size.sh", self.binary], stderr=subprocess.STDOUT)
-			self.logger.info(output2)
-
 		except subprocess.CalledProcessError as err:
 			self.logger.error(err)
 			self.logger.error(err.output)
 			raise
+        try:
+			#FIXME print static RAM usage
+			output2 = subprocess.check_output(["static_size.sh", self.binary], stderr=subprocess.STDOUT)
+			self.logger.info(output2)
+        except Exception:
+            self.logger.info("static_size.sh failed")
 	def reset(self):
 		try:
 			self.logger.info( "Resetting")
