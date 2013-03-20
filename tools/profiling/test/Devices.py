@@ -283,12 +283,12 @@ class INGA(Device):
 			self.logger.error(err)
 			self.logger.error(err.output)
 			raise
-        try:
+		try:
 			#FIXME print static RAM usage
 			output2 = subprocess.check_output(["static_size.sh", self.binary], stderr=subprocess.STDOUT)
 			self.logger.info(output2)
-        except Exception:
-            self.logger.info("static_size.sh failed")
+		except Exception:
+			self.logger.info("static_size.sh failed")
 	def reset(self):
 		try:
 			self.logger.info( "Resetting")
