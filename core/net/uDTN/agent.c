@@ -172,7 +172,7 @@ PROCESS_THREAD(agent_process, ev, data)
             bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
 	    	//FIXME
-            printf("AGENT: dtn_processing_finished / locally_delivered: ID: %lu\n", bundle->bundle_num);
+            LOG(LOGD_DTN, LOG_AGENT, LOGL_DBG, "AGENT: dtn_processing_finished / locally_delivered: ID: %lu", bundle->bundle_num);
 
 	    	// Notify routing, that service has finished processing a bundle
 	    	ROUTING.locally_delivered(bundlemem);

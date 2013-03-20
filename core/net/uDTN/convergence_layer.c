@@ -284,11 +284,11 @@ int convergence_layer_send_bundle(struct transmit_ticket_t * ticket)
 	/* This neighbour is blocked, until we have received the App Layer ACK or NACK */
 	convergence_layer_set_blocked(&ticket->neighbour);
 
+    LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu ",
+            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
+
 	/* And send it out */
 	dtn_network_send(&ticket->neighbour, length, (void *) ticket);
-
-	printf("cl_send: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
-            bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num); //FIXME
 
 	return 1;
 }
@@ -541,7 +541,6 @@ int convergence_layer_incoming_frame(rimeaddr_t * source, uint8_t * payload, uin
 	uint8_t header;
 
 	LOG(LOGD_DTN, LOG_CL, LOGL_DBG, "Incoming frame from %u.%u", source->u8[0], source->u8[1]);
-    printf("Incoming frame from %u.%u\n", source->u8[0], source->u8[1]); //FIXME
 
 	/* Check the COMPAT information */
 	if( (payload[0] & CONVERGENCE_LAYER_MASK_COMPAT) != CONVERGENCE_LAYER_COMPAT ) {
