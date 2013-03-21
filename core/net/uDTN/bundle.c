@@ -85,7 +85,7 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
 //FIXME !!!
 //check this elsewhere?
 #ifdef TEST_NO_NETWORK
-    LOG(LOGD_DTN, LOG_BUNDLE, LOGL_WRN, "new_bundle: TEST_NO_NETWORK");
+    printf("new_bundle: TEST_NO_NETWORK\n");
 #else
     /* Go and find the process from which the bundle has been sent */ //FIXME wird evtl. noch an anderer stelle benötigt?
     if(registration_return_status(src_srv, dtn_node_id) == -1 && bundle->source_process != &agent_process) {
@@ -137,7 +137,7 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
     bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
     //FIXME
-    LOG(LOGD_DTN, LOG_BUNDLE, LOGL_DBG, "bundle_new_bundle: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
+    printf("bundle_new_bundle: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu\n",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
 
     return bundlemem;
@@ -191,7 +191,7 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
        /* Saving the bundle failed... */
        if( !n ) {
            /* Decrement the sequence number */
-           LOG(LOGD_DTN, LOG_BUNDLE, LOGL_INF, "b.c: saving failed");
+           printf("b.c: saving failed\n");
            dtn_seq_nr--;
            return 0;
        }
@@ -433,7 +433,7 @@ struct mmem *bundle_recover_bundle(uint8_t *buffer, int size)
 	bundle->bundle_num = bundle_calculate_bundle_number(bundle->tstamp_seq, bundle->tstamp, bundle->src_node, bundle->frag_offs, bundle->app_len);
 
 	//FIXME
-	LOG(LOGD_DTN, LOG_BUNDLE, LOGL_DBG, "bundle_recover_bundle: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
+	printf("bundle_recover_bundle: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu\n",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
 
 	/* FIXME: Loop around and decode all blocks - does this work? */
@@ -701,6 +701,7 @@ uint32_t convert_rime_to_eid(rimeaddr_t * dest) {
 	eid = (dest->u8[1] & 0xFF) + ((dest->u8[0] & 0xFF) << 8);
 
     LOG(LOGD_DTN, LOG_BUNDLE, LOGL_DBG, "converting rimeaddr %u.%u to eid %lu", dest->u8[0], dest->u8[1], eid);
+    printf("converting rimeaddr %u.%u to eid %lu\n", dest->u8[0], dest->u8[1], eid); //FIXME
 
 	return eid;
 }

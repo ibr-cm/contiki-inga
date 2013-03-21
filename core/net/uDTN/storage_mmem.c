@@ -346,9 +346,9 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
 }
 
 //FIXME
-//void same_bundle(){
-//    printf("same bundle\n");
-//}
+void same_bundle(){
+    printf("same bundle\n");
+}
 /**
  * \brief saves a bundle in storage
  * \param bundlemem pointer to the bundle
@@ -382,7 +382,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 		if( bundle->bundle_num == entrybdl->bundle_num ) {
 			LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "%lu is the same bundle", entry->bundle_num);
-			//same_bundle(); //FIXME
+			same_bundle(); //FIXME
 			bundle_decrement(bundlemem);
 			return 1;
 		}

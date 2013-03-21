@@ -50,7 +50,6 @@
 #include "dev/leds.h"
 #include "dev/cc2420.h"
 #include "etimer.h"
-#include "logging.h"
 
 #include "net/uDTN/api.h"
 #include "net/uDTN/agent.h"
@@ -99,15 +98,12 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 	reg.app_id = REG_SINK_APP_ID;
 	process_post(&agent_process, dtn_application_registration_event, &reg);
 
-	/* Set loglevel, default is  LOGL_WRN */
-    logging_domain_level_set(LOGD_APP, 0, LOGL_INF);
-
 	/* Profile initialization separately */
 	profiling_stop();
 	watchdog_stop();
 	profiling_report("init", 0);
 	watchdog_start();
-	LOG(LOGD_APP, 0, LOGL_INF, "Init done, starting test with %d bundles\n", BUNDLES);
+    printf("Init done, starting test with %d bundles\n", BUNDLES);
 
 	profiling_init();
 	profiling_start();
@@ -145,17 +141,17 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 		int error = 0;
 
 		if( block == NULL ) {
-			LOG(LOGD_APP, 0, LOGL_INF, "Payload: no block\n");
+			printf("Payload: no block\n");
 			error = 1;
 		} else {
 			if( block->block_size != 80 ) {
-				LOG(LOGD_APP, 0, LOGL_INF, "Payload: length is %d, should be 80\n", block->block_size);
+				printf("Payload: length is %d, should be 80\n", block->block_size);
 				error = 1;
 			}
 
 			for(i=0; i<80; i++) {
 				if( block->payload[i] != i ) {
-					LOG(LOGD_APP, 0, LOGL_INF, "Payload: byte %d mismatch. Should be %02X, is %02X\n", i, i, block->payload[i]);
+					printf("Payload: byte %d mismatch. Should be %02X, is %02X\n", i, i, block->payload[i]);
 					error = 1;
 				}
 			}
@@ -184,7 +180,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 		}
 
 		//if (bundles_recv%50 == 0)
-			LOG(LOGD_APP, 0, LOGL_INF, "Received Bundles: %u\n", bundles_recv);
+			printf("Received Bundles: %u\n", bundles_recv);
 
 		/* Report profiling data after receiving BUNDLES bundles
 		   Ideally seq. no 0-999 */
@@ -193,12 +189,12 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			profiling_stop();
 			time_stop = test_precise_timestamp(NULL);
 
-			LOG(LOGD_APP, 0, LOGL_INF, "sink done\n");
+			printf("sink done\n");
 
 			bundle_outgoing = bundle_new_bundle(tmp, REG_SENDER_APP_ID, REG_SINK_APP_ID, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 
 			if( bundle_outgoing == NULL ) {
-				LOG(LOGD_APP, 0, LOGL_INF, "create_bundle failed\n");
+				printf("create_bundle failed\n");
 				continue;
 			}
 
@@ -206,7 +202,7 @@ PROCESS_THREAD(udtn_sink_process, ev, data)
 			userdata[0] = 'o';
 			userdata[1] = 'k';
 			if( bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 2) != 2){
-			    LOG(LOGD_APP, 0, LOGL_INF, "sink: bundle_add_block: FAILED"); //FIXME
+			    printf("sink: bundle_add_block: FAILED"); //FIXME
 			}
 
 			//FIXME sender is too fast

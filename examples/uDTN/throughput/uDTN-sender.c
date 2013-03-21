@@ -49,7 +49,6 @@
 #include "sys/test.h"
 #include "sys/profiling.h"
 #include "watchdog.h"
-#include "logging.h"
 
 #include "net/uDTN/bundle.h"
 #include "net/uDTN/agent.h"
@@ -104,9 +103,6 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 	reg.app_id = REG_SENDER_APP_ID;
 	process_post(&agent_process, dtn_application_registration_event,&reg);
 
-    /* Set loglevel, default is  LOGL_WRN */
-    logging_domain_level_set(LOGD_APP, 0, LOGL_INF);
-
 	/* Profile initialization separately */
 	profiling_stop();
 	watchdog_stop();
@@ -114,8 +110,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 	watchdog_start();
 
 	/* Wait until a neighbour has been discovered */
-	LOG(LOGD_APP, 0, LOGL_INF, "Waiting for neighbour to appear...\n");
-    LOG(LOGD_APP, 0, LOGL_INF, "");
+	printf("Waiting for neighbour to appear...\n");
 	while( DISCOVERY.neighbours() == NULL ) {
 		PROCESS_PAUSE();
 	}
@@ -124,7 +119,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 	etimer_set(&timer, CLOCK_SECOND);
 	PROCESS_WAIT_UNTIL(etimer_expired(&timer));
 
-	LOG(LOGD_APP, 0, LOGL_INF, "Init done, starting test with %d bundles\n", BUNDLES);
+	printf("Init done, starting test with %d bundles\n", BUNDLES);
 
 	profiling_init();
 	profiling_start();
@@ -195,7 +190,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		bundle_outgoing = bundle_new_bundle(CONF_SEND_TO_NODE, REG_SINK_APP_ID, REG_SENDER_APP_ID, BUNDLE_LIFETIME, BUNDLE_FLAG_SINGLETON);
 
 		if( bundle_outgoing == NULL ) {
-			LOG(LOGD_APP, 0, LOGL_INF, "create_bundle failed\n");
+			printf("create_bundle failed\n");
 			continue;
 		}
 #if REPORT
@@ -213,7 +208,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		n = bundle_add_block(bundle_outgoing, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, userdata, 80);
 		if( n != 80 ) { //FIXME
             /* Sending the last bundle failed, do not send this time round */
-			LOG(LOGD_APP, 0, LOGL_INF, "not enough room for block\n");
+			printf("not enough room for block\n");
 			bundle_decrement(bundle_outgoing);
 			continue;
 		}
@@ -223,7 +218,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 		bundles_sent++;
 		/* Show progress every 50 bundles */
 		//if (bundles_sent%50 == 0)
-			LOG(LOGD_APP, 0, LOGL_INF, "Sent Bundles: %i\n", bundles_sent);
+			printf("Sent Bundles: %i\n", bundles_sent);
 	}
 	PROCESS_END();
 }

@@ -18,21 +18,21 @@ tests:
         cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=1000"
         graph_options: ""
   - name: throughput-debug
-    timeout: 90
+    timeout: 900
     devices:
       - name: sender
         programdir: examples/uDTN/throughput
         program: uDTN-sender
-        instrument: []
-        debug: [examples/uDTN/throughput/uDTN-sender.c,core/net/uDTN/agent.c,core/net/uDTN/convergence_layer.c,core/net/uDTN/bundle.c,core/net/uDTN/storage_mmem.c,core/net/uDTN/dispatching.c]
-        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=50 -DCONF_LOGLEVEL=LOGL_DBG"
+        instrument: [examples/uDTN/throughput/uDTN-sender.c,platform/inga/*.c,core/net/uDTN/*.c]
+        debug: [examples/uDTN/throughput/uDTN-sender.c,core/net/uDTN/*.c]
+        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=1000"
         graph_options: ""
       - name: receiver
         programdir: examples/uDTN/throughput
         program: uDTN-sink
-        instrument: []
-        debug: [examples/uDTN/throughput/uDTN-sink.c,core/net/uDTN/agent.c,core/net/uDTN/convergence_layer.c,core/net/uDTN/bundle.c,core/net/uDTN/storage_mmem.c,core/net/uDTN/dispatching.c]
-        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=50 -DCONF_LOGLEVEL=LOGL_DBG"
+        instrument: [examples/uDTN/throughput/uDTN-sink.c,platform/inga/*.c,core/net/uDTN/*.c]
+        debug: [examples/uDTN/throughput/uDTN-sender.c,core/net/uDTN/*.c]
+        cflags: "-fno-inline -DCONF_SEND_TO_NODE=$RECEIVER -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30 -DCONF_BUNDLES=1000"
         graph_options: ""
   - name: throughput-uninstr
     timeout: 900
