@@ -357,6 +357,19 @@ void same_bundle(){
  */
 uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 {
+    uint8_t *rb_data, *rb_prev, *rb_next;
+    uint16_t rb_address = 500, rb_length = 11;  //FIXME lenght: offset mit speichern?
+
+    char rb_data_val[11] = "Hallo Welt.";
+    uint16_t rb_prev_val = 0xFFFF;
+    uint16_t rb_next_val = 501;
+
+    rb_data = (uint8_t *) rb_data_val;
+    rb_prev = (uint8_t *) &rb_prev_val;
+    rb_next = (uint8_t *) &rb_next_val;
+
+    STORAGE_PERSISTENT.write_block(rb_address,rb_data,rb_length,rb_prev,rb_next);  //FIXME
+
 	struct bundle_t *entrybdl = NULL,
 					*bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
@@ -519,6 +532,8 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 	return 1;
 }
 
+//static int delete_block_once = 1; //FIXME
+
 /**
  * \brief reads a bundle from storage
  * \param bundle_num bundle number to read
@@ -526,6 +541,31 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
  */
 struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length)
 {
+    uint16_t *rb_prev, *rb_next;
+    uint8_t *rb_data;
+    uint16_t rb_address = 500, rb_length = 11;  //FIXME lenght: offset mit speichern?
+
+    char rb_data_val_read[11];
+
+    rb_data = (uint8_t *) rb_data_val_read;
+
+    STORAGE_PERSISTENT.read_block(rb_address,rb_data,rb_length,(uint8_t *) rb_prev,(uint8_t *) rb_next);  //FIXME
+
+    printf("READ_FROM_FLASH: Page(%u), Bytes(%u), Prev(%u), Next(%u)\n", rb_address, rb_length, *rb_prev, *rb_next);
+    int ii;
+    printf("Data: ");
+    for(ii=0; ii<rb_length; ++ii){
+        printf("%c",rb_data_val_read[ii]);
+    }
+    printf("\n");
+
+    //FIXME
+//    if(delete_block_once){
+//        delete_block_once = 0;
+//        printf("deleting block 500\n");
+//        STORAGE_PERSISTENT.delete_blocks(500,500);
+//    }
+
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle = NULL;
 

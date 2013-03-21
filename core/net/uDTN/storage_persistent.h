@@ -23,6 +23,8 @@
 
 #include "contiki.h"
 
+extern uint8_t storage_persistent_write_protected;
+
 /**
  * Which persistent storage driver are we going to use?
  * Default is Flash
@@ -44,7 +46,7 @@ struct storage_persistent_driver {
 	 * \param pointer to previous data segment in persistent storage (address)
 	 * \param pointer to next data segment in persistent storage (address)
 	 */
-	uint8_t (* write_block)(uint16_t address, uint8_t *data, uint16_t length, uint16_t prev_segm, uint16_t next_segm); //FIXME konzeption sieht noch *bundlemem vor, scheint überflüssig...
+	uint8_t (* write_block)(uint16_t address, uint8_t *data, uint16_t length, uint8_t *prev_segm, uint8_t *next_segm); //FIXME konzeption sieht noch *bundlemem vor, scheint überflüssig...
 	/**
 	 * \brief reads block of data from persistent storage
 	 * \param address in persistent storage
@@ -53,13 +55,13 @@ struct storage_persistent_driver {
 	 * \param pointer to previous data segment in persistent storage (address)
 	 * \param pointer to next data segment in persistent storage (address)
 	 */
-	uint8_t (* read_block)(uint16_t address, uint8_t *data, uint16_t length, uint16_t prev_segm, uint16_t next_segm); //FIXME konzeption sieht noch *bundlemem vor, scheint überflüssig...
+	uint8_t (* read_block)(uint16_t address, uint8_t *data, uint16_t length, uint8_t *prev_segm, uint8_t *next_segm); //FIXME konzeption sieht noch *bundlemem vor, scheint überflüssig...
 	/**
 	 * \brief deletes contents of persistent storage
 	 * \param address to start deletion
 	 * \param last address to delete
 	 */
-	uint8_t (* flush)(uint16_t start_address, uint16_t end_address);
+	uint8_t (* delete_blocks)(uint16_t start_address, uint16_t end_address);
 };
 extern const struct storage_persistent_driver STORAGE_PERSISTENT;
 #endif
