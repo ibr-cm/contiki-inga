@@ -27,6 +27,7 @@
 
 #include "bundle.h"
 #include "bundleslot.h"  //FIXME ist das notwendig?
+#include "storage_persistent.h"
 
 #define STORAGE_FIRST_SEGMENT 0x01
 #define STORAGE_SEGMENT       0x02
