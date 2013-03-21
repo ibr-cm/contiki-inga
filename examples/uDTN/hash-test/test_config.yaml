@@ -18,7 +18,7 @@ tests:
         program: uDTN-hash-test
         instrument: []
         debug: [examples/uDTN/hash-test/uDTN-hash-test.c]
-        cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        cflags: "-fno-inline -DPROFILES_CONF_MAX=0 -DPROFILES_CONF_STACKSIZE=0"
         graph_options: ""
   - name: hash-uninstr
     timeout: 900

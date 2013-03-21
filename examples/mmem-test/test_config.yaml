@@ -18,7 +18,7 @@ tests:
         program: mmem-test
         instrument: []
         debug: [examples/mmem-test/mmem-test.c,core/net/uDTN/*.c]
-        cflags: "-fno-inline -DPROFILES_CONF_MAX=100 -DPROFILES_CONF_STACKSIZE=30"
+        cflags: "-fno-inline -DPROFILES_CONF_MAX=0 -DPROFILES_CONF_STACKSIZE=0"
         graph_options: ""
   - name: mmem-test-uninstr
     timeout: 60
