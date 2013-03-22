@@ -151,6 +151,10 @@ void storage_mmem_prune()
  */
 uint8_t storage_mmem_flush(void)
 {
+    //FIXME testcode für STORAGE_PERSISTENT.delete_blocks
+//    printf("STORAGE_PERSISTENT.delete_blocks(0,4095)\n");
+//    STORAGE_PERSISTENT.delete_blocks(0,4095);
+
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t *bundle = NULL;
 
@@ -349,6 +353,7 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
 void same_bundle(){
     printf("same bundle\n");
 }
+
 /**
  * \brief saves a bundle in storage
  * \param bundlemem pointer to the bundle
@@ -357,18 +362,10 @@ void same_bundle(){
  */
 uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 {
-    uint8_t *rb_data, *rb_prev, *rb_next;
-    uint16_t rb_address = 500, rb_length = 11;  //FIXME lenght: offset mit speichern?
-
-    char rb_data_val[11] = "Hallo Welt.";
-    uint16_t rb_prev_val = 0xFFFF;
-    uint16_t rb_next_val = 501;
-
-    rb_data = (uint8_t *) rb_data_val;
-    rb_prev = (uint8_t *) &rb_prev_val;
-    rb_next = (uint8_t *) &rb_next_val;
-
-    STORAGE_PERSISTENT.write_block(rb_address,rb_data,rb_length,rb_prev,rb_next);  //FIXME
+    //FIXME testcode für STORAGE_PERSISTENT.write_block
+//    uint16_t rb_address = 500, rb_length = 10, rb_prev = 0xFFFF, rb_next = 501;
+//    uint8_t rb_data[10] = {0,1,2,3,4,5,6,7,8,9};
+//    STORAGE_PERSISTENT.write_block(rb_address,rb_data,rb_length,rb_prev,rb_next);
 
 	struct bundle_t *entrybdl = NULL,
 					*bundle = NULL;
@@ -532,7 +529,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 	return 1;
 }
 
-//static int delete_block_once = 1; //FIXME
+//static int delete_block_once = 1; //FIXME testcode für STORAGE_PERSISTENT.delete_blocks
 
 /**
  * \brief reads a bundle from storage
@@ -541,25 +538,20 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
  */
 struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_start_offset, uint16_t block_data_length)
 {
-    uint16_t *rb_prev, *rb_next;
-    uint8_t *rb_data;
-    uint16_t rb_address = 500, rb_length = 11;  //FIXME lenght: offset mit speichern?
+    //FIXME testcode für STORAGE_PERSISTENT.read_block
+//    uint16_t rb_address = 500, rb_length = 10, rb_prev_read, rb_next_read;
+//    uint8_t rb_data_read[10];
+//    STORAGE_PERSISTENT.read_block(rb_address,rb_data_read,rb_length,&rb_prev_read,&rb_next_read);
+//
+//    printf("READ_FROM_FLASH: Page(%u), Bytes(%u), Prev(%u), Next(%u)\n", rb_address, rb_length, rb_prev_read, rb_next_read);
+//    int ii;
+//    printf("READ_FROM_FLASH: Data: ");
+//    for(ii=0; ii<rb_length; ++ii){
+//        printf("%u",rb_data_read[ii]);
+//    }
+//    printf("\n");
 
-    char rb_data_val_read[11];
-
-    rb_data = (uint8_t *) rb_data_val_read;
-
-    STORAGE_PERSISTENT.read_block(rb_address,rb_data,rb_length,(uint8_t *) rb_prev,(uint8_t *) rb_next);  //FIXME
-
-    printf("READ_FROM_FLASH: Page(%u), Bytes(%u), Prev(%u), Next(%u)\n", rb_address, rb_length, *rb_prev, *rb_next);
-    int ii;
-    printf("Data: ");
-    for(ii=0; ii<rb_length; ++ii){
-        printf("%c",rb_data_val_read[ii]);
-    }
-    printf("\n");
-
-    //FIXME
+    //FIXME testcode für STORAGE_PERSISTENT.delete_blocks
 //    if(delete_block_once){
 //        delete_block_once = 0;
 //        printf("deleting block 500\n");
