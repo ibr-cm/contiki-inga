@@ -25,26 +25,6 @@
 #include "memb.h"
 
 /**
- * Of how many blocks consists the cache?
- * Default is 10
- */
-#ifdef CACHE_CONF_BLOCKS_NUM
-#define CACHE_BLOCKS_NUM CACHE_CONF_BLOCKS_NUM
-#else
-#define CACHE_BLOCKS_NUM 10
-#endif
-
-/**
- * Size of one cache block?
- * Default is 528 (FLASH_PAGE_SIZE on INGA) //FIXME 512, var
- */
-#ifdef CACHE_CONF_BLOCKS_SIZE
-#define CACHE_BLOCKS_SIZE CACHE_CONF_BLOCKS_SIZE
-#else
-#define CACHE_BLOCKS_SIZE 528
-#endif
-
-/**
  * Define partitions for quotas.
  *
  */
@@ -69,6 +49,11 @@
 #define CACHE_PARTITION_RESET 0
 #define CACHE_PARTITION_NEXT_BLOCK 1
 
+/* */
+#define CACHE_DIRTY_FLAG 0x8000
+#define CACHE_USE_FLAG 0x4000
+#define CACHE_TAG_MASK 0x3FFF
+
 /**
  * Representation of a cache entry
  */
@@ -80,8 +65,8 @@ struct cache_entry_t {
 	uint16_t cache_flags; //FIXME Dirty, Use, Tag
 	                      // 14 Bit Tag = 16384 data blocks are addressable
 
-	/** Data Block*/
-	uint8_t data_block[CACHE_BLOCKS_SIZE];
+    /** pointer to the block data stored in MMEM */
+    struct mmem *block;
 };
 
 /** cache interface  */

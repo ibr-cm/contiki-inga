@@ -34,16 +34,18 @@
 #include "statistics.h"
 
 #include "storage.h"
+#include "cache.h"
 
 //FIXME dummy index block
-static struct bundle_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
-static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
+//static struct bundle_index_entry_t temp_index_array[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
+//static uint16_t temp_index_array_collision_check[BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS] = { 0 };
 
 //      * index_newest_block
 //      storage_cached_get_index_block()
 static uint8_t last_index_entry = 0;
 /** Last written block with index data, initialized with invalid value */  //FIXME this replaces temp_index_array
 //static uint8_t last_index_block_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
+static uint8_t index_block_num = 0;
 
 // defined in mmem.c, no function to access it though
 extern unsigned int avail_memory;
@@ -54,7 +56,7 @@ extern unsigned int avail_memory;
  * The layout is quite fixed - the next pointer and the bundle_num have to go first because this struct
  * has to be compatible with the struct storage_entry_t in storage.h!
  */
-struct bundle_list_entry_t {  //durch bundle_index_entry_t ersetzen
+struct bundle_list_entry_t {  //FIXME nicht durch bundle_index_entry_t ersetzen
 	/** pointer to the next list element */
 	struct bundle_list_entry_t * next;
 
@@ -62,7 +64,11 @@ struct bundle_list_entry_t {  //durch bundle_index_entry_t ersetzen
 	 * a static address that we can pass on as an
 	 * argument to an event
 	 */
-	uint32_t bundle_num;
+	uint32_t bundle_num;  //FIXME das weg?
+
+    /** Cache flags */
+    uint16_t cache_flags; //FIXME Dirty, Use, Tag
+                          // 14 Bit Tag = 16384 data blocks are addressable
 
 	/** pointer to the actual bundle stored in MMEM */
 	struct mmem *bundle;
@@ -86,6 +92,8 @@ void storage_mmem_prune();
 uint8_t storage_mmem_flush(void);
 uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number);
 void storage_mmem_update_statistics();
+uint8_t storage_mmem_create_index_block();
+struct mmem *storage_mmem_get_index_block(uint8_t blocknr);
 
 /**
  * \brief internal function to send statistics to statistics module
@@ -101,6 +109,7 @@ void storage_mmem_update_statistics() {
 uint8_t storage_mmem_init(void)
 {
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "storage_mmem init");
+    printf("storage_mmem init\n");
 
 	// Initialize the bundle list
 	list_init(bundle_list);
@@ -112,6 +121,12 @@ uint8_t storage_mmem_init(void)
 	mmem_init();
 
 	bundles_in_storage = 0;
+
+	//FIXME
+	//STORAGE_PERSISTENT.delete_blocks(CACHE_PARTITION_B_INDEX_START, CACHE_PARTITION_B_INDEX_END);
+	if (!storage_mmem_create_index_block()){
+	    printf("storage_mmem init: storage_mmem_create_index_block failed");
+	}
 
 	storage_mmem_flush();  //FIXME das sollte hier später raus. clean != leer...
 	storage_mmem_update_statistics();
@@ -127,6 +142,7 @@ uint8_t storage_mmem_init(void)
 void storage_mmem_prune()
 {
 	uint32_t elapsed_time;
+	uint16_t cache_tag;
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t *bundle = NULL;
 
@@ -134,13 +150,19 @@ void storage_mmem_prune()
 	for(entry = list_head(bundle_list);
 			entry != NULL;
 			entry = list_item_next(entry)) {
-		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
-		elapsed_time = clock_seconds() - bundle->rec_time;
 
-		if( bundle->lifetime < elapsed_time ) {
-			LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "bundle lifetime expired of bundle %lu", entry->bundle_num);
-			storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
-		}
+        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+            continue;
+        }
+
+		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
+        elapsed_time = clock_seconds() - bundle->rec_time;
+
+        if( bundle->lifetime < elapsed_time ) {
+            LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "bundle lifetime expired of bundle %lu", entry->bundle_num);
+            storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
+        }
 	}
 
 	ctimer_restart(&r_store_timer);
@@ -157,11 +179,18 @@ uint8_t storage_mmem_flush(void)
 
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t *bundle = NULL;
+	uint16_t cache_tag;
 
 	// Delete all bundles from storage
 	for(entry = list_head(bundle_list);
 			entry != NULL;
 			entry = list_item_next(entry)) {
+
+        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+            continue;
+        }
+
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
 		storage_mmem_delete_bundle_by_bundle_number(bundle->bundle_num);
@@ -181,6 +210,7 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle_new = NULL;
 	struct bundle_t * bundle_old = NULL;
+	uint16_t cache_tag;
 
 	/* Now delete expired bundles */  //FIXME not what we want...
 	storage_mmem_prune();
@@ -201,6 +231,12 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 		for( entry = list_head(bundle_list);
 			 entry != NULL;
 			 entry = list_item_next(entry) ) {
+
+	        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+	        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+	            continue;
+	        }
+
 			bundle_old = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
 			/* If the new bundle has a longer lifetime than the bundle in our storage,
@@ -225,20 +261,89 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 }
 
 /**
+ * \brief create empty index block
+ */
+uint8_t storage_mmem_create_index_block(){
+    //printf("storage_mmem_create_index_block()\n"); //FIXME
+    int ret;
+    struct bundle_slot_t *bs;
+    struct bundle_index_entry_t *index_entry;
+    struct bundle_list_entry_t * entry = NULL;
+
+    bs = bundleslot_get_free();
+
+    if( bs == NULL ) {
+        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate slot for a index block");
+        return 0;
+    }
+
+    //FIXME
+    //ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
+    ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
+    if (!ret) {
+        bundleslot_free(bs);
+        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate memory for a index block");
+        return 0;
+    }
+
+    index_entry = (struct bundle_index_entry_t *) MMEM_PTR(&bs->bundle);
+    //memset(index_block, 0, sizeof(struct bundle_t));
+    memset(index_entry, 0, MIN_BUNDLESLOT_SIZE);
+    //memcpy(index_entry, temp_index_array, MIN_BUNDLESLOT_SIZE);
+
+    entry = memb_alloc(&bundle_mem);
+    if( entry == NULL ) {
+        LOG(LOGD_DTN, LOG_STORE, LOGL_ERR, "unable to allocate struct, cannot store index block");
+        bundle_decrement(&bs->bundle);
+        return 0;
+    }
+
+    // we copy the reference to the list
+    entry->bundle = &bs->bundle;
+
+    //FIXME
+    ++index_block_num;
+
+    // Set bundle number //FIXME deprecated
+    entry->bundle_num = index_block_num;
+
+    // Mark as index block
+    entry->cache_flags = CACHE_PARTITION_B_INDEX_INVALID_TAG;
+
+    // Set dirty flag
+    entry->cache_flags |= CACHE_DIRTY_FLAG;
+
+    // Add block to the list
+    list_add(bundle_list, entry);
+
+    return 1;
+}
+
+/**
  * \brief adds index entry
  */
 uint8_t storage_mmem_add_index_entry(uint32_t ID, uint32_t TargetNode){
     //printf("storage_mmem_add_index_entry: ID: %lu, Target: %lu\n", ID, TargetNode); //FIXME
     //FIXME in dem Moment, in dem die gültige Adresse feststeht
+
+    static struct mmem *indexmem;
+    static struct bundle_index_entry_t *index_entry;
+    indexmem = storage_mmem_get_index_block(1);
+    index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
+
     uint8_t i;
     for(i=last_index_entry; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
-        if(temp_index_array[i].bundle_num == 0 && temp_index_array[i].dst_node == 0){
-            temp_index_array[i].bundle_num = ID;
-            temp_index_array[i].dst_node = TargetNode;
+        if(index_entry[i].bundle_num == 0 && index_entry[i].dst_node == 0){
+            index_entry[i].bundle_num = ID;
+            index_entry[i].dst_node = TargetNode;
             last_index_entry = i;
+            //printf("Index[%u] is now: (ID: %lu, Node: %lu)\n",i,index_entry[i].bundle_num,index_entry[i].dst_node); //FIXME
+            //bundle_decrement(indexmem);
             return 1;
         }
     }
+    printf("storage_mmem_add_index_entry failed\n");
+    //bundle_decrement(indexmem);
     return 0;
 }
 
@@ -247,21 +352,30 @@ uint8_t storage_mmem_add_index_entry(uint32_t ID, uint32_t TargetNode){
  */
 uint8_t storage_mmem_del_index_entry(uint32_t ID){
     //printf("storage_mmem_del_index_entry: ID: %lu\n", ID); //FIXME
+
+    static struct mmem *indexmem;
+    static struct bundle_index_entry_t *index_entry;
+    indexmem = storage_mmem_get_index_block(1);
+    index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
+
     uint8_t i;
     for(i=0; i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS; ++i){
-        if(temp_index_array[i].bundle_num == ID){
-            temp_index_array[i].bundle_num = temp_index_array[last_index_entry].bundle_num;
-            temp_index_array[i].dst_node = temp_index_array[last_index_entry].dst_node;
-            temp_index_array[last_index_entry].bundle_num = 0;
-            temp_index_array[last_index_entry].dst_node = 0;
+        if(index_entry[i].bundle_num == ID){
+            //printf("Deleting Index[%u] (ID: %lu, Node: %lu)\n",i,index_entry[i].bundle_num,index_entry[i].dst_node); //FIXME
+            index_entry[i].bundle_num = index_entry[last_index_entry].bundle_num;
+            index_entry[i].dst_node = index_entry[last_index_entry].dst_node;
+            index_entry[last_index_entry].bundle_num = 0;
+            index_entry[last_index_entry].dst_node = 0;
             if(last_index_entry != 0){
                 --last_index_entry;
             }
+            //bundle_decrement(indexmem);
             return 1;
         }
     }
+    printf("storage_mmem_del_index_entry failed\n");
+    //bundle_decrement(indexmem);
     return 0;
-
 }
 
 /**
@@ -269,41 +383,32 @@ uint8_t storage_mmem_del_index_entry(uint32_t ID){
  * \returns pointer to first bundle list entry
  */
 struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
+    //printf("storage_mmem_get_index_block: NR: %u\n", blocknr); //FIXME
 
     //FIXME nur 1 block...
     if(blocknr != 1){
         return NULL;
     }
 
-    //FIXME Liste leer
-    if(temp_index_array[0].bundle_num == 0 && temp_index_array[0].dst_node == 0){
-        return NULL;
+    struct bundle_list_entry_t * entry = NULL;
+    struct bundle_index_entry_t * index_entry = NULL;
+    uint16_t cache_tag;
+
+    // Look for the index_entry we are talking about
+    for(entry = list_head(bundle_list);
+            entry != NULL;
+            entry = list_item_next(entry)) {
+
+        //printf("storage_mmem_get_index_block: ID: %lu, Flags: %u\n",entry->bundle_num,entry->cache_flags);
+
+        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+        //printf("storage_mmem_get_index_block: Tag: %u\n",cache_tag);
+        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || ( cache_tag >= CACHE_PARTITION_B_INDEX_START && cache_tag <= CACHE_PARTITION_B_INDEX_END)){
+            index_entry = (struct bundle_index_entry_t *) MMEM_PTR(entry->bundle);
+            break; //FIXME
+        }
+
     }
-
-    int ret;
-    struct bundle_slot_t *bs;
-    struct bundle_index_entry_t *index_start;
-
-    bs = bundleslot_get_free();
-
-    if( bs == NULL ) {
-        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate slot for a bundle");
-        return NULL;
-    }
-
-    //FIXME
-    //ret = mmem_alloc(&bs->bundle, sizeof(struct bundle_t));
-    ret = mmem_alloc(&bs->bundle, MIN_BUNDLESLOT_SIZE);
-    if (!ret) {
-        bundleslot_free(bs);
-        LOG(LOGD_DTN, LOG_BUNDLE, LOGL_ERR, "Could not allocate memory for a bundle");
-        return NULL;
-    }
-
-    index_start = (struct bundle_index_entry_t *) MMEM_PTR(&bs->bundle);
-    //memset(index_block, 0, sizeof(struct bundle_t));
-    //memset(index_start, 0, MIN_BUNDLESLOT_SIZE);
-    memcpy(index_start, temp_index_array, MIN_BUNDLESLOT_SIZE);
 
     //get "next" index block from cache
     //struct cache_entry_t cache_block = BUNDLE_CACHE.cache_access_partition(CACHE_PARTITION_NEXT_BLOCK, CACHE_PARTITION_B_INDEX_START, last_index_block_address);
@@ -346,7 +451,10 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
     //      freigeben von liste?
     //      Kümmert sich um das Nachladen vom Flash
 
-    return &bs->bundle;
+    if(index_entry != NULL)
+        return entry->bundle;
+
+    return NULL;
 }
 
 //FIXME
@@ -370,6 +478,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	struct bundle_t *entrybdl = NULL,
 					*bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
+	uint16_t cache_tag;
 
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "storage_mmem_save_bundle with invalid pointer %p", bundlemem);
@@ -388,6 +497,12 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	for(entry = list_head(bundle_list);
 		entry != NULL;
 		entry = list_item_next(entry)) {
+
+        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+            continue;
+        }
+
 		entrybdl = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
 		if( bundle->bundle_num == entrybdl->bundle_num ) {
@@ -423,6 +538,9 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 
 	// Set bundle number //FIXME deprecated
 	entry->bundle_num = bundle->bundle_num;
+
+	// Mark as bundle, dirty
+	entry->cache_flags = CACHE_PARTITION_BUNDLES_INVALID_TAG | CACHE_DIRTY_FLAG;
 
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "New Bundle %lu (%lu), Src %lu, Dest %lu, Seq %lu", bundle->bundle_num, entry->bundle_num, bundle->src_node, bundle->dst_node, bundle->tstamp_seq);
 
@@ -470,6 +588,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 {
 	struct bundle_t * bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
+	uint16_t cache_tag;
 
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "Deleting Bundle %lu", bundle_number);
 
@@ -477,6 +596,12 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 	for(entry = list_head(bundle_list);
 		entry != NULL;
 		entry = list_item_next(entry)) {
+
+        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+            continue;
+        }
+
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
 		if( bundle->bundle_num == bundle_number ) {
@@ -560,11 +685,18 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle = NULL;
+	uint16_t cache_tag;
 
 	// Look for the bundle we are talking about
 	for(entry = list_head(bundle_list);
 			entry != NULL;
 			entry = list_item_next(entry)) {
+
+        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
+        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+            continue;
+        }
+
 		bundle = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
 		if( bundle->bundle_num == bundle_num ) {

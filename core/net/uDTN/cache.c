@@ -22,6 +22,7 @@
 #include "logging.h"
 
 #include "profiling.h"
+#include "bundleslot.h"
 
 #include "cache.h"
 
@@ -40,7 +41,7 @@ uint8_t memb_cache_write_back(uint16_t persistent_address){
 
 struct cache_entry_t * memb_cache_access_partition(uint8_t mode, uint16_t partition_start, uint16_t partition_end){
 
-	static uint8_t delivered_index_blocks[CACHE_BLOCKS_NUM] = { 0 };
+	static uint8_t delivered_index_blocks[BUNDLE_NUM] = { 0 };
 	static uint8_t last_delivered_address = CACHE_PARTITION_B_INDEX_INVALID_TAG;
 
 	if (partition_end == CACHE_PARTITION_B_INDEX_INVALID_TAG){

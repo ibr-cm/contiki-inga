@@ -26,7 +26,7 @@
 #include "memb.h"
 
 #include "bundle.h"
-#include "bundleslot.h"  //FIXME ist das notwendig?
+#include "bundleslot.h"
 #include "storage_persistent.h"
 
 #define STORAGE_FIRST_SEGMENT 0x01
@@ -50,12 +50,12 @@
 #ifdef BUNDLE_CONF_STORAGE_SIZE
 #define BUNDLE_STORAGE_SIZE BUNDLE_CONF_STORAGE_SIZE
 #else
-#define BUNDLE_STORAGE_SIZE 	10
+#define BUNDLE_STORAGE_SIZE 	10 //FIXME BUNDLE_NUM
 #endif
 
 /**
  * Should storage go into an initial safe state when starting up?
- * Otherwise, some storages may try to reconstruct the last start before powering down
+ * Otherwise, some storages may try to reconstruct the last start before powering down //FIXME BUNDLE_STORAGE_FLUSH_ON_INIT ?
  */
 #ifdef BUNDLE_CONF_STORAGE_INIT
 #define BUNDLE_STORAGE_INIT BUNDLE_CONF_STORAGE_INIT
@@ -63,7 +63,11 @@
 #define BUNDLE_STORAGE_INIT 0
 #endif
 
+#define BUNDLE_STORAGE_FLUSH_ON_INIT 0
+
 #define BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS 66 //FIXME = floor(MAX_SLOT_SIZE / sizeof(struct bundle_index_entry_t))
+#define BUNDLE_STORAGE_MAX_INDEX_BLOCKS 62 //FIXME
+
 /**
  * Representation of a bundle in the array returned by the "get_index_block" call to the storage module
  */
