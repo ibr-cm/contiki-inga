@@ -20,13 +20,6 @@
 #include "agent.h"
 #include "bundleslot.h"
 
-/* Defines how many bundles can be used (in storage, used) on this node at once */
-#ifdef CONF_BUNDLE_NUM
-#define BUNDLE_NUM CONF_BUNDLE_NUM
-#else
-#define BUNDLE_NUM 50
-#endif
-
 #define INIT_GUARD() \
 	do {\
 		if (!inited) {\
