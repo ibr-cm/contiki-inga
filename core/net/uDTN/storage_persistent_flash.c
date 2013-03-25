@@ -78,6 +78,7 @@ uint8_t storage_persistent_flash_delete_blocks(uint16_t start_address, uint16_t 
     } else {
         for(; start_address<=end_address; ++start_address){
             at45db_erase_page(start_address);
+            //FIXME watchdog_periodic();
         }
     }
     return 0;
