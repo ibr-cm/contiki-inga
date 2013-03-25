@@ -120,8 +120,8 @@ static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32
 		return 0;
 	}
 
-	struct bundle_t *bundle;
-	bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
+	//struct bundle_t *bundle;
+	//bundle = (struct bundle_t *) MMEM_PTR(bundlemem);
 
     /* Allocate bundle payload block, if BUNDLE_BLOCK_FLAG_LAST and last block segment, bundle can be considered "sent" (dtn_bundle_in_storage_event) FIXME */
 	block_size = bundle_add_block(bundlemem, BUNDLE_BLOCK_TYPE_PAYLOAD, BUNDLE_BLOCK_FLAG_LAST, data, len); 
@@ -133,7 +133,7 @@ static inline uint8_t bundle_convenience(uint32_t dest, uint32_t dst_srv, uint32
 
 PROCESS_THREAD(coordinator_process, ev, data)
 {
-	static struct etimer timer;
+	//static struct etimer timer;
 	PROCESS_BEGIN();
 
 	profiling_init();
