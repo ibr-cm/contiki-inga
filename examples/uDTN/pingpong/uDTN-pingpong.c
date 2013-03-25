@@ -146,19 +146,22 @@ PROCESS_THREAD(coordinator_process, ev, data)
 
 #if CONF_MODE == MODE_ACTIVE
 	process_start(&ping_process, NULL);
+	PROCESS_WAIT_UNTIL(!process_is_running(&ping_process));
 #elif CONF_MODE == MODE_PASSIVE
 	process_start(&pong_process, NULL);
+	PROCESS_WAIT_UNTIL(!process_is_running(&pong_process));
 #else
 	process_start(&ping_process, NULL);
 	process_start(&pong_process, NULL);
+	PROCESS_WAIT_UNTIL(!process_is_running(&ping_process));
 #endif
 
 	/* The pong process doesn't collect anything, so PASS device directly.
 	 * Otherwise wait for ping to finish. */
-	PROCESS_WAIT_UNTIL(!process_is_running(&ping_process));
+	//PROCESS_WAIT_UNTIL(!process_is_running(&ping_process));
 
-	etimer_set(&timer, CLOCK_SECOND*120);
-	PROCESS_WAIT_UNTIL(etimer_expired(&timer));
+	//etimer_set(&timer, CLOCK_SECOND*120); //FIXME a timeout is already defined in test_config.yaml, this is highly irritating
+	//PROCESS_WAIT_UNTIL(etimer_expired(&timer));
 
 	profiling_stop();
 	watchdog_stop();
@@ -329,8 +332,15 @@ PROCESS_THREAD(pong_process, ev, data)
 
 	/* Transfer */
 	while(1) {
-		/* Wait for incoming bundle */
-		PROCESS_WAIT_EVENT_UNTIL(ev == submit_data_to_application_event);
+	    //FIXME see coordinator_process timeout
+	    /* Wait for incoming bundle or timeout */
+	    etimer_set(&timer, CLOCK_SECOND*20);
+	    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer) || ev == submit_data_to_application_event);
+		//PROCESS_WAIT_EVENT_UNTIL(ev == submit_data_to_application_event);
+
+	    if(etimer_expired(&timer))
+	        break;
+
         LOG(LOGD_APP, 0, LOGL_INF, "received something"); //FIXME
 
 		/* We received a bundle - bounce it back */
