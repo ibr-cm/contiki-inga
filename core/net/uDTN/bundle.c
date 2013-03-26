@@ -114,6 +114,9 @@ struct mmem * bundle_new_bundle(uint32_t dest, uint32_t dst_srv, uint32_t src_sr
     //bundle->frag_offs = 0;
     //bundle->app_len = 0;
 
+    /* Set Flags */
+    bundle->flags = bundle_flags;
+
     //FIXME aus agent.c
     /* Check for report-to and set node and service accordingly */
     bundle_get_attr(bundlemem, FLAGS, &bundle_flags);

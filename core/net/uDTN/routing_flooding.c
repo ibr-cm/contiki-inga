@@ -437,7 +437,7 @@ void routing_flooding_resubmit_bundles() {
  * \param bundle_number Number of the bundle
  */
 void routing_flooding_check_keep_bundle(uint32_t bundle_number) {
-    printf("ROUTING: Check Deleting bundle %lu\n", bundle_number); //FIXME
+    //printf("ROUTING: Check Deleting bundle %lu\n", bundle_number); //FIXME
 	struct routing_list_entry_t * n = NULL;
 	struct routing_entry_t * entry = NULL;
 
@@ -459,10 +459,7 @@ void routing_flooding_check_keep_bundle(uint32_t bundle_number) {
 	}
 
 	if( (entry->flags & ROUTING_FLAG_LOCAL) || (entry->flags & ROUTING_FLAG_FORWARD) ) {
-	    printf("ROUTING: Check Flags, no delete %lu, Flags: %u\n", bundle_number, entry->flags); //FIXME
-	    //FIXME why are locally delivered bundles not getting deleted?
-	    // ROUTING_FLAG_FORWARD is still set, sometimes ROUTING_FLAG_IN_TRANSIT too
-	    // TEST_DO_NOT_DELETE_ON_DIRECT_DELIVERY is not set
+	    //printf("ROUTING: Check Flags, no delete %lu, Flags: %u\n", bundle_number, entry->flags); //FIXME
 		return;
 	}
 
