@@ -53,20 +53,11 @@ static void dtn_network_init(void)
 	agent_init();
 }
 
-//FIXME used in examples/uDTN/throughput/uDTN-sink.c
-//FIXME to avoid dos by examples/uDTN/throughput/uDTN-sender.c
-int dtn_nw_disable_input_var = 0;
-void dtn_nw_disable_input(void){
-    dtn_nw_disable_input_var =1;
-}
-
 /**
  * Input callback called by the lower layers to indicate incoming data
  */
 static void dtn_network_input(void) 
 {
-    if(!dtn_nw_disable_input_var){
-
 	rimeaddr_t source;
 	uint8_t * buffer = NULL;
 	uint8_t length = 0;
@@ -81,8 +72,6 @@ static void dtn_network_input(void)
 	convergence_layer_incoming_frame(&source, buffer, length);
 
 	leds_off(LEDS_ALL);
-
-    }
 }
 
 /**
