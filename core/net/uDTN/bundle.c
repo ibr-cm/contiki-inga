@@ -191,7 +191,7 @@ int bundle_add_block(struct mmem *bundlemem, uint8_t type, uint8_t flags, uint8_
        /* Saving the bundle failed... */
        if( !n ) {
            /* Decrement the sequence number */
-           printf("b.c: saving failed\n");
+           printf("bundle_add_block: saving failed\n");
            dtn_seq_nr--;
            return 0;
        }

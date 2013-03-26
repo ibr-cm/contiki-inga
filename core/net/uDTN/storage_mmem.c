@@ -94,7 +94,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number);
 void storage_mmem_update_statistics();
 uint8_t storage_mmem_create_index_block();
 struct mmem *storage_mmem_get_index_block(uint8_t blocknr);
-
+uint32_t storage_mmem_get_free_space();
 /**
  * \brief internal function to send statistics to statistics module
  */
@@ -103,6 +103,18 @@ void storage_mmem_update_statistics() {
 	statistics_storage_memory(avail_memory);
 }
 
+//FIXME verschieben nach cache.c ?
+/**
+ * \brief checks if cache_flags contain a index tag
+ */
+uint8_t is_index_tag(uint16_t cache_flags) {
+    uint16_t cache_tag;
+    cache_tag = cache_flags & CACHE_TAG_MASK;
+    if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || ( cache_tag >= CACHE_PARTITION_B_INDEX_START && cache_tag <= CACHE_PARTITION_B_INDEX_END)){
+        return 1;
+    }
+    return 0;
+}
 /**
  * \brief called by agent at startup
  */
@@ -142,7 +154,6 @@ uint8_t storage_mmem_init(void)
 void storage_mmem_prune()
 {
 	uint32_t elapsed_time;
-	uint16_t cache_tag;
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t *bundle = NULL;
 
@@ -151,8 +162,7 @@ void storage_mmem_prune()
 			entry != NULL;
 			entry = list_item_next(entry)) {
 
-        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+        if(is_index_tag(entry->cache_flags)){ //FIXME
             continue;
         }
 
@@ -179,15 +189,13 @@ uint8_t storage_mmem_flush(void)
 
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t *bundle = NULL;
-	uint16_t cache_tag;
 
 	// Delete all bundles from storage
 	for(entry = list_head(bundle_list);
 			entry != NULL;
 			entry = list_item_next(entry)) {
 
-        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+        if(is_index_tag(entry->cache_flags)){ //FIXME
             continue;
         }
 
@@ -207,13 +215,14 @@ uint8_t storage_mmem_flush(void)
  */
 uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 {
+    //printf("mmem_make_room: start, free_space: %lu\n",storage_mmem_get_free_space());
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle_new = NULL;
 	struct bundle_t * bundle_old = NULL;
-	uint16_t cache_tag;
 
 	/* Now delete expired bundles */  //FIXME not what we want...
 	storage_mmem_prune();
+    //printf("mmem_make_room: prune done, free_space: %lu\n",storage_mmem_get_free_space());
 
 	/* If we do not have a pointer, we cannot compare - do nothing */
 	if( bundlemem == NULL ) {
@@ -221,7 +230,7 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 	}
 
 	/* Keep deleting bundles until we have enough slots */
-	while( bundles_in_storage >= BUNDLE_STORAGE_SIZE) {
+	while( bundles_in_storage >= (BUNDLE_STORAGE_SIZE -1)) {
 		/* Obtain the new pointer each time, since the address may change */
 		bundle_new = (struct bundle_t *) MMEM_PTR(bundlemem);
 
@@ -232,23 +241,30 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 			 entry != NULL;
 			 entry = list_item_next(entry) ) {
 
-	        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-	        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+	        if(is_index_tag(entry->cache_flags)){ //FIXME
 	            continue;
 	        }
 
 			bundle_old = (struct bundle_t *) MMEM_PTR(entry->bundle);
 
+		    //FIXME
+		    //printf("mmem_make_room: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu\n",
+		    //        bundle_old->rec_time, bundle_old->num_blocks, bundle_old->src_node, bundle_old->src_srv, bundle_old->dst_node, bundle_old->dst_srv, bundle_old->tstamp_seq, bundle_old->lifetime, bundle_old->bundle_num);
+
 			/* If the new bundle has a longer lifetime than the bundle in our storage,
 			 * delete the bundle from storage to make room
 			 */
 			if( bundle_new->lifetime - (clock_seconds() - bundle_new->rec_time) >= bundle_old->lifetime - (clock_seconds() - bundle_old->rec_time) ) {
+			    //FIXME
+			    //printf("mmem_make_room DELETE: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu\n",
+			    //                 bundle_old->rec_time, bundle_old->num_blocks, bundle_old->src_node, bundle_old->src_srv, bundle_old->dst_node, bundle_old->dst_srv, bundle_old->tstamp_seq, bundle_old->lifetime, bundle_old->bundle_num);
 				break;
 			}
 		}
 
 		/* Either the for loop did nothing or did not break */
 		if( entry == NULL ) {
+		    //printf("mmem_make_room: nope, can't help you man, free_space: %lu\n",storage_mmem_get_free_space());
 			/* We do not have deletable bundles in storage, stop deleting them */
 			return 0;
 		}
@@ -256,6 +272,7 @@ uint8_t storage_mmem_make_room(struct mmem * bundlemem)
 		/* Delete Bundle */
 		storage_mmem_delete_bundle_by_bundle_number(entry->bundle_num);
 	}
+    //printf("mmem_make_room: done, free_space: %lu\n",storage_mmem_get_free_space());
 
 	return 1;
 }
@@ -392,7 +409,6 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
 
     struct bundle_list_entry_t * entry = NULL;
     struct bundle_index_entry_t * index_entry = NULL;
-    uint16_t cache_tag;
 
     // Look for the index_entry we are talking about
     for(entry = list_head(bundle_list);
@@ -401,9 +417,7 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
 
         //printf("storage_mmem_get_index_block: ID: %lu, Flags: %u\n",entry->bundle_num,entry->cache_flags);
 
-        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-        //printf("storage_mmem_get_index_block: Tag: %u\n",cache_tag);
-        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || ( cache_tag >= CACHE_PARTITION_B_INDEX_START && cache_tag <= CACHE_PARTITION_B_INDEX_END)){
+        if(is_index_tag(entry->cache_flags)){ //FIXME
             index_entry = (struct bundle_index_entry_t *) MMEM_PTR(entry->bundle);
             break; //FIXME
         }
@@ -451,7 +465,7 @@ struct mmem *storage_mmem_get_index_block(uint8_t blocknr){
     //      freigeben von liste?
     //      Kümmert sich um das Nachladen vom Flash
 
-    if(index_entry != NULL)
+    if(index_entry != NULL) //FIXME
         return entry->bundle;
 
     return NULL;
@@ -478,7 +492,6 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 	struct bundle_t *entrybdl = NULL,
 					*bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
-	uint16_t cache_tag;
 
 	if( bundlemem == NULL ) {
 		LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "storage_mmem_save_bundle with invalid pointer %p", bundlemem);
@@ -498,8 +511,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 		entry != NULL;
 		entry = list_item_next(entry)) {
 
-        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+        if(is_index_tag(entry->cache_flags)){ //FIXME
             continue;
         }
 
@@ -588,7 +600,6 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 {
 	struct bundle_t * bundle = NULL;
 	struct bundle_list_entry_t * entry = NULL;
-	uint16_t cache_tag;
 
 	LOG(LOGD_DTN, LOG_STORE, LOGL_INF, "Deleting Bundle %lu", bundle_number);
 
@@ -597,8 +608,7 @@ uint8_t storage_mmem_delete_bundle_by_bundle_number(uint32_t bundle_number)
 		entry != NULL;
 		entry = list_item_next(entry)) {
 
-        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+        if(is_index_tag(entry->cache_flags)){ //FIXME
             continue;
         }
 
@@ -685,15 +695,13 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 
 	struct bundle_list_entry_t * entry = NULL;
 	struct bundle_t * bundle = NULL;
-	uint16_t cache_tag;
 
 	// Look for the bundle we are talking about
 	for(entry = list_head(bundle_list);
 			entry != NULL;
 			entry = list_item_next(entry)) {
 
-        cache_tag = entry->cache_flags & CACHE_TAG_MASK;
-        if(cache_tag == CACHE_PARTITION_B_INDEX_INVALID_TAG || cache_tag <= CACHE_PARTITION_B_INDEX_END){ //FIXME
+        if(is_index_tag(entry->cache_flags)){ //FIXME
             continue;
         }
 
@@ -741,7 +749,7 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
  */
 uint32_t storage_mmem_get_free_space()
 {
-	return BUNDLE_STORAGE_SIZE - bundles_in_storage;
+	return BUNDLE_STORAGE_SIZE - bundles_in_storage - 1; //FIXME das sollte erstmal tun, berechnung später prinzipiell falsch (BUNDLE_STORAGE_SIZE = BUNDLE_STORAGE_CACHE_SIZE - INDEX_CACHE_SIZE)
 }
 
 /**
