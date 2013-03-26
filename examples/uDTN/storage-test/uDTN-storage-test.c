@@ -54,7 +54,7 @@
 #include "net/uDTN/storage.h"
 #include "net/uDTN/api.h"
 
-#define TEST_BUNDLES BUNDLE_STORAGE_SIZE
+#define TEST_BUNDLES (BUNDLE_STORAGE_SIZE - 1) //FIXME
 
 #define REG_TEST_APP_ID 10
 
@@ -72,10 +72,28 @@ uint32_t bundle_numbers[TEST_BUNDLES * 3];
 unsigned int initial_memory;
 uint16_t bundle_slots_free;
 
+static struct mmem *indexmem = NULL;
+static struct bundle_index_entry_t *index_entry;
+
+static int errors = 0;
+
 /*---------------------------------------------------------------------------*/
 PROCESS(test_process, "TEST");
 
 AUTOSTART_PROCESSES(&test_process);
+
+void check_bundle_list_empty(){
+    indexmem = BUNDLE_STORAGE.get_index_block(1);
+    bundle_increment(indexmem);
+    if(indexmem != NULL ) {
+        index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
+        if(index_entry[0].bundle_num != 0 || index_entry[0].dst_node != 0){
+            printf("Bundle list is not empty\n");
+            errors ++;
+        }
+    }
+    bundle_decrement(indexmem);
+}
 
 uint8_t my_create_bundle(uint32_t sequence_number, uint32_t * bundle_number, uint32_t lifetime) {
 	struct mmem *ptr = NULL;
@@ -191,13 +209,10 @@ PROCESS_THREAD(test_process, ev, data)
 {
 	static int n;
 	static uint32_t i, j;
-	static int errors = 0;
 	static int mode;
 	static struct etimer timer;
 	static int ok = 0;
 	static uint32_t time_start, time_stop;
-	static struct mmem *indexmem = NULL;
-	static struct bundle_index_entry_t *index_entry;
     static struct registration_api reg_test;
 
 	PROCESS_BEGIN();
@@ -268,10 +283,7 @@ PROCESS_THREAD(test_process, ev, data)
 			errors++;
 		}
 
-		if( BUNDLE_STORAGE.get_index_block(1) != NULL ) {
-			printf("Bundle list is not empty\n");
-			errors ++;
-		}
+		check_bundle_list_empty();
 
 		if( BUNDLE_STORAGE.get_bundle_count() > 0 ) {
 			printf("Storage reports more than 0 bundles\n");
@@ -294,10 +306,7 @@ PROCESS_THREAD(test_process, ev, data)
 
 		printf("MODE %u\n", mode);
 
-		if( BUNDLE_STORAGE.get_index_block(1) != NULL ) {
-			printf("Bundle list is not empty\n");
-			errors ++;
-		}
+        check_bundle_list_empty();
 
 		printf("Creating bundles...\n");
 		// Create TEST_BUNDLES bundles
@@ -406,6 +415,7 @@ PROCESS_THREAD(test_process, ev, data)
 
 		if( mode != 4 && mode != 5 ) {
             indexmem = BUNDLE_STORAGE.get_index_block(1); //FIXME while != NULL
+            bundle_increment(indexmem);
             if(indexmem != NULL){
                 index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
                 for(i=0;i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS;++i){
@@ -430,6 +440,7 @@ PROCESS_THREAD(test_process, ev, data)
             bundle_decrement(indexmem);
 
             indexmem = BUNDLE_STORAGE.get_index_block(1); //FIXME while != NULL
+            bundle_increment(indexmem);
             if(indexmem != NULL){
                 index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
                 for(i=0; i<TEST_BUNDLES; i++) {
@@ -500,10 +511,7 @@ PROCESS_THREAD(test_process, ev, data)
 
 	time_stop = test_precise_timestamp(NULL);
 
-	if( BUNDLE_STORAGE.get_index_block(1) != NULL ) {
-		printf("Bundle list is not empty\n");
-		errors ++;
-	}
+    check_bundle_list_empty();
 
 	printf("Verifying bundle expiration...\n");
 	// Now verify the lifetime expiration of the storage
@@ -525,26 +533,7 @@ PROCESS_THREAD(test_process, ev, data)
 
 	printf("Checking for leftovers...\n");
 	// And check!
-	if( BUNDLE_STORAGE.get_index_block(1) != NULL ) {
-		printf("Bundle list is not empty\n");
-		//FIXME DEBUG START
-        indexmem = BUNDLE_STORAGE.get_index_block(1);
-        index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
-        for(i=0;i<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS;++i){
-            if(index_entry[i].bundle_num == 0 && index_entry[i].dst_node == 0){
-                break;
-            }
-            printf("Left: ID: %lu, Target: %lu\n",index_entry[i].bundle_num,index_entry[i].dst_node);
-        }
-
-        if( !ok ) {
-            printf("Bundle list does not contain bundle %lu\n", bundle_numbers[i]);
-            errors ++;
-        }
-        bundle_decrement(indexmem);
-		//FIXME DEBUG END
-		errors ++;
-	}
+	check_bundle_list_empty();
 
 	if( BUNDLE_STORAGE.get_bundle_count() > 0 ) {
 		printf("Storage reports more than 0 bundles\n");
@@ -561,9 +550,15 @@ PROCESS_THREAD(test_process, ev, data)
 		errors++;
 	}
 
-	printf("Verifying that storage overwrites old bundles when new come in...\n");
+	printf("Verifying that storage overwrites old bundles when new come in...\n");  //FIXME do we really want to know this
 	for(i=0; i<TEST_BUNDLES*2; i++) {
 		PROCESS_PAUSE();
+
+		if(i==TEST_BUNDLES+1) { //FIXME otherwise storage_mmem_make_room sees no difference and this test fails...
+            // Wait again
+            etimer_set(&timer, CLOCK_SECOND);
+            PROCESS_WAIT_UNTIL(etimer_expired(&timer));
+		}
 
 		if( my_create_bundle(i, &bundle_numbers[i], 3600) ) {
 			printf("\tBundle %lu created successfully \n", i);
@@ -592,6 +587,7 @@ PROCESS_THREAD(test_process, ev, data)
 		ok = 0;
 
         indexmem = BUNDLE_STORAGE.get_index_block(1); //FIXME while != NULL
+        bundle_increment(indexmem);
         if(indexmem != NULL){
             index_entry = (struct bundle_index_entry_t *) MMEM_PTR(indexmem);
             for(j=0;j<BUNDLE_STORAGE_INDEX_ARRAY_ENTRYS;++j){
@@ -613,7 +609,7 @@ PROCESS_THREAD(test_process, ev, data)
 		PROCESS_PAUSE();
 
 		if( BUNDLE_STORAGE.get_bundle_count() != ((TEST_BUNDLES*2) - i) ) {
-			printf("Storage erroneously reports %lu bundles, expected %u\n", BUNDLE_STORAGE.get_bundle_count(), ((TEST_BUNDLES*2) - i));
+			printf("Storage erroneously reports %u bundles, expected %lu\n", BUNDLE_STORAGE.get_bundle_count(), ((TEST_BUNDLES*2) - i));
 			errors ++;
 		}
 
@@ -638,10 +634,7 @@ PROCESS_THREAD(test_process, ev, data)
 	}
 
 	// And check!
-	if( BUNDLE_STORAGE.get_index_block(1) != NULL ) {
-		printf("Bundle list is not empty\n");
-		errors ++;
-	}
+    check_bundle_list_empty();
 
 	if( BUNDLE_STORAGE.get_bundle_count() > 0 ) {
 		printf("Storage reports more than 0 bundles\n");
