@@ -3,7 +3,7 @@
 
 // Set our MMEM size
 #undef MMEM_CONF_SIZE
-#define MMEM_CONF_SIZE 2000
+#define MMEM_CONF_SIZE 3000
 
 // Disable the CSMA retransmission buffers
 #undef QUEUEBUF_CONF_NUM
