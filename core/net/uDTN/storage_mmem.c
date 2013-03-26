@@ -577,7 +577,7 @@ uint8_t storage_mmem_save_bundle(struct mmem * bundlemem, uint8_t flags)
 #ifdef TEST_NO_NETWORK
         LOG(LOGD_DTN, LOG_STORE, LOGL_WRN, "save_bundle: TEST_NO_NETWORK\n");
 #else
-        process_post(&agent_process, dtn_bundle_in_storage_event, &bundle->bundle_num);
+        process_post(&agent_process, dtn_bundle_in_storage_event, &entry->bundle_num);  //FIXME stattdessen hier routing aufrufen und das an service schicken?
 #endif
     }
 
