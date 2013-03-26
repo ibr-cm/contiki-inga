@@ -711,7 +711,7 @@ struct mmem *storage_mmem_read_bundle(uint32_t bundle_num, uint32_t block_data_s
 			break;
 		}
 	}
-	LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu \n",
+	LOG(LOGD_DTN, LOG_STORE, LOGL_DBG, "read_done: RecTime: %lu , NumBlocks: %u , SrcNode: %lu , SrcSrv: %lu , DestNode: %lu , DestSrv: %lu , SeqNr: %lu , Lifetime: %lu, ID: %lu",
             bundle->rec_time, bundle->num_blocks, bundle->src_node, bundle->src_srv, bundle->dst_node, bundle->dst_srv, bundle->tstamp_seq, bundle->lifetime, bundle->bundle_num);
 
 	if( entry == NULL ) {

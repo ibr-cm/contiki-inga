@@ -132,7 +132,7 @@ PROCESS_THREAD(udtn_sender_process, ev, data)
 
 	while(1) {
 		/* Wait for the next incoming event */
-	    //FIXME without this, bundle generation is too fast!?
+	    //FIXME needed for flow control
 		PROCESS_WAIT_EVENT();
 
 		/* Check for timeout */
