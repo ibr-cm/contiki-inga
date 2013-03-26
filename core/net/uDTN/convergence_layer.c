@@ -422,8 +422,6 @@ int convergence_layer_resend_ack(struct transmit_ticket_t * ticket)
 
 int convergence_layer_parse_dataframe(rimeaddr_t * source, uint8_t * payload, uint8_t length, uint8_t flags, uint8_t sequence_number)
 {
-    LOG(LOGD_DTN, LOG_CL, LOGL_INF, "Bundle (?) received %p from %u.%u with flags %02X, sequence_number: %u", payload, source->u8[0], source->u8[1], flags, sequence_number);
-
 	struct mmem * bundlemem = NULL;
 	struct bundle_t * bundle = NULL;
 	int n;
