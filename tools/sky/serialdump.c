@@ -16,6 +16,7 @@
 #define MODEMDEVICE "/dev/ttyS0"
 #else
 #if defined __APPLE__ && defined __MACH__
+#include <sys/ioctl.h>
 #define MODEMDEVICE "/dev/tty"
 #else
 #define MODEMDEVICE "/dev/com1"
@@ -43,7 +44,7 @@
 #define MODE_SLIP	7
 #define MODE_SLIP_HIDE	8
 
-static unsigned char rxbuf[2048];
+static char rxbuf[2048];
 
 static int
 usage(int result)
@@ -60,7 +61,7 @@ usage(int result)
 }
 
 static void
-print_hex_line(unsigned char *prefix, unsigned char *outbuf, int index)
+print_hex_line(char *prefix, char *outbuf, int index)
 {
   int i;
 
@@ -96,7 +97,8 @@ int main(int argc, char **argv)
   char *speedname = BAUDRATE_S;
   char *device = MODEMDEVICE;
   char *timeformat = NULL;
-  unsigned char buf[BUFSIZE], outbuf[HCOLS];
+  unsigned char buf[BUFSIZE];
+  char outbuf[HCOLS];
   unsigned char mode = MODE_START_TEXT;
   int nfound, flags = 0;
   unsigned char lastc = '\0';
@@ -119,6 +121,9 @@ int main(int argc, char **argv)
 	} else if (strcmp(&argv[index][2], "115200") == 0) {
 	  speed = B115200;
 	  speedname = "115200";
+	} else if (strcmp(&argv[index][2], "500000") == 0) {
+	  speed = B500000;
+	  speedname = "500000";
 	} else {
 	  fprintf(stderr, "unsupported speed: %s\n", &argv[index][2]);
 	  return usage(1);
@@ -168,11 +173,9 @@ int main(int argc, char **argv)
   }
   fprintf(stderr, "connecting to %s (%s)", device, speedname);
 
-#if defined __APPLE__ && defined __MACH__
+#ifndef __APPLE__
   fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY | O_SYNC );
 #else
-  fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY | O_DIRECT | O_SYNC );
-#endif
   fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY | O_SYNC );
 #endif
   if (fd <0) {
@@ -198,6 +201,14 @@ int main(int argc, char **argv)
     perror("could not get options");
     exit(-1);
   }
+#if defined __APPLE__ && defined __MACH__
+
+#define IOSSIOSPEED 0x80045402
+  char bufz[4];
+  *(int* ) bufz = speed;
+  ioctl(fd, IOSSIOSPEED, bufz, 1);
+
+#else
 /*   fprintf(stderr, "serial options set\n"); */
   cfsetispeed(&options, speed);
   cfsetospeed(&options, speed);
@@ -217,7 +228,7 @@ int main(int argc, char **argv)
     perror("could not set options");
     exit(-1);
   }
-
+#endif
   /* Make read() return immediately */
 /*    if (fcntl(fd, F_SETFL, FNDELAY) < 0) { */
 /*      perror("\ncould not set fcntl"); */
@@ -276,7 +287,7 @@ int main(int argc, char **argv)
     }
 
     if(FD_ISSET(fd, &smask)) {
-      int i, j, n = read(fd, buf, sizeof(buf));
+      int i, n = read(fd, buf, sizeof(buf));
       if (n < 0) {
 	perror("could not read");
 	exit(-1);

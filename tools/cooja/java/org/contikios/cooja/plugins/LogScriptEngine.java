@@ -264,6 +264,11 @@ public class LogScriptEngine {
     } else {
       logger.info("Script timeout in " + (timeout/Simulation.MILLISECOND) + " ms");
     }
+    logger.error("Running Script with:"
+            + "\nEngineName:      " + engine.getFactory().getEngineName()
+            + "\nEngineVersion:   " + engine.getFactory().getEngineVersion()
+            + "\nLanguageName:    " + engine.getFactory().getLanguageName()
+            + "\nLanguageVersion: " + engine.getFactory().getLanguageVersion());
 
     engine.eval(jsCode);
 
