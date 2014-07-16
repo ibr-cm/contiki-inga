@@ -287,13 +287,13 @@ make receiver-node.cooja TARGET=cooja</commands>
 //GENERATE_MSG(1000000, "remove-sink");&#xD;
 //GENERATE_MSG(1020000, "add-sink");&#xD;
 &#xD;
-lostMsgs = 0;&#xD;
+var lostMsgs = 0;&#xD;
 &#xD;
 TIMEOUT(1000000, if(lastMsg != -1 &amp;&amp; lostMsgs == 0) { log.testOK(); } );&#xD;
 &#xD;
-lastMsg = -1;&#xD;
-packets = "_________";&#xD;
-hops = 0;&#xD;
+var lastMsg = -1;&#xD;
+var packets = "_________";&#xD;
+var hops = 0;&#xD;
 &#xD;
 while(true) {&#xD;
     YIELD();&#xD;
