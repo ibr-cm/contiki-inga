@@ -250,4 +250,4 @@ include $(CONTIKIAVR)/Makefile.avr
 include $(CONTIKIAVR)/radio/Makefile.radio
 
 MODULES += core/net/ip core/net/ipv6 core/net/mac core/net core/net/rime core/net/mac/sicslowmac core/net/rpl \
-           core/net/llsec core/net/nocoresec
+           core/net/llsec core/net/nocoresec dev/rf231

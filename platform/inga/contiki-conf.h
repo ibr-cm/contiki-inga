@@ -285,6 +285,10 @@
 #define CC_CONF_INLINE inline
 #endif 
 
+#ifndef AES_128_CONF
+#define AES_128_CONF rf231_aes_128_driver
+#endif /* AES_128_CONF */
+
 /* Include the project config.
  * PROJECT_CONF_H might be defined in the project Makefile */
 #ifdef PROJECT_CONF_H
