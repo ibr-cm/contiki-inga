@@ -685,7 +685,7 @@ hal_frame_write(uint8_t *write_buffer, uint8_t length)
  * \param length Length of the read burst
  * \param data Pointer to buffer where data is stored.
  */
-#if 1  //Uses 80 bytes (on Raven) omit unless needed
+#if HAL_SRAM_READ
 void
 hal_sram_read(uint8_t address, uint8_t length, uint8_t *data)
 {
@@ -707,7 +707,7 @@ hal_sram_read(uint8_t address, uint8_t length, uint8_t *data)
 
     HAL_SPI_TRANSFER_CLOSE();
 }
-#endif
+#endif /* HAL_SRAM_READ */
 /*----------------------------------------------------------------------------*/
 /** \brief Write SRAM
  *
@@ -718,7 +718,7 @@ hal_sram_read(uint8_t address, uint8_t length, uint8_t *data)
  * \param length  Length of the write burst
  * \param data    Pointer to an array of bytes that should be written
  */
-#if 1  //omit unless needed
+#if HAL_SRAM_WRITE
 void
 hal_sram_write(uint8_t address, uint8_t length, uint8_t *data)
 {
@@ -738,8 +738,7 @@ hal_sram_write(uint8_t address, uint8_t length, uint8_t *data)
     HAL_SPI_TRANSFER_CLOSE();
 
 }
-#endif
-
+#endif /* HAL_SRAM_WRITE */
 /*----------------------------------------------------------------------------*/
 /* This #if compile switch is used to provide a "standard" function body for the */
 /* doxygen documentation. */
