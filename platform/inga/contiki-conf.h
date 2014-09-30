@@ -276,6 +276,12 @@
 /* Logging adds 200 bytes to program size */
 #define LOG_CONF_ENABLED         1
 
+/* Enable SRAM read and write, used by the aes-module
+ * Adds about 80 bytes each to program size
+ */
+#define HAL_SRAM_READ            1
+#define HAL_SRAM_WRITE           1
+
 /* Contiki Core Interface (has no function here) */
 #define CCIF
 /* Contiki Loadable Interface (has no function here) */
