@@ -18,6 +18,7 @@ example-shell/native \
 inga/demo/inga \
 inga/sensors/inga \
 inga/fat/inga \
+inga/aes/inga \
 rime/inga \
 rime/sky \
 ravenusbstick/avr-ravenusb \
