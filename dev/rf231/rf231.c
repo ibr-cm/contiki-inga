@@ -38,14 +38,17 @@
 uint8_t aes_buffer[18];
 /*---------------------------------------------------------------------------*/
 /**
- * \brief Waits until the aes-component completet its aes-operation
+ * \brief Waits until the aes-component completed its aes-operation
+ *        Will terminate itself, if the status dosn't change after 5 attempts
  */
 void
 rf231_aes_128_wait_until_is_ready()
 {
   uint8_t status = 0;
-  while(!status) {
+  uint8_t timeout = 0;
+  while(!status && timeout < 5) {
     _delay_us(20);
+    timeout++;
     hal_sram_read(ADDR_AES_STATUS, 1, &status);
   }
 }
