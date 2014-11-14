@@ -55,7 +55,7 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 	  rec_count++;
   }
 
-  if (rec_count == 10) {
+  if (rec_count == 2) {
   	radio_done=1;
   }
 }
