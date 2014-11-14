@@ -105,8 +105,8 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
   static struct etimer et;
   static linkaddr_t addr;
 
-  etimer_set(&et, 2*CLOCK_SECOND);
-  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
+//  etimer_set(&et, 2*CLOCK_SECOND);
+//  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
   addr.u8[0] = 0 >> 8;
   addr.u8[1] = 1 & 0xFF;
   static int8_t idx = 0;
