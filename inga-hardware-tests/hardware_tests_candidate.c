@@ -139,15 +139,15 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TEST_ASSERT("Accelerometer failed to init (may not mounted?)",test_res);
 		
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_0HZ10) && assert_acc_value());
-		TEST_ASSERT("Accelerometer vaule failed for 1/10HZ",test_res);
+		TEST_ASSERT("Accelerometer value failed for 1/10HZ",test_res);
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_6HZ25) && assert_acc_value()); 
-		TEST_ASSERT("Accelerometer vaule failed for 6/25HZ",test_res);
+		TEST_ASSERT("Accelerometer value failed for 6/25HZ",test_res);
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_25HZ) && assert_acc_value()); 
-		TEST_ASSERT("Accelerometer vaule failed for 25HZ",test_res);
+		TEST_ASSERT("Accelerometer value failed for 25HZ",test_res);
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_100HZ) && assert_acc_value());
-		TEST_ASSERT("Accelerometer vaule failed for 100HZ",test_res);
+		TEST_ASSERT("Accelerometer value failed for 100HZ",test_res);
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_400HZ) && assert_acc_value());
-		TEST_ASSERT("Accelerometer vaule failed for 400HZ",test_res);
+		TEST_ASSERT("Accelerometer value failed for 400HZ",test_res);
 		
 		test_res = SENSORS_DEACTIVATE(acc_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ acc_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Accelerometer failed deactivate",test_res);
