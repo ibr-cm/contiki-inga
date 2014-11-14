@@ -49,6 +49,11 @@
 
 #include <avr/eeprom.h>
 
+/* Include the project config.
+ * PROJECT_CONF_H might be defined in the project Makefile */
+#ifdef PROJECT_CONF_H
+#include PROJECT_CONF_H
+#endif /* PROJECT_CONF_H */
 /* Skip the last four bytes of the EEPROM, to leave room for things
  * like the avrdude erase count and bootloader signaling. */
 #define EEPROM_CONF_SIZE   ((E2END + 1) - 4)
@@ -285,10 +290,5 @@
 #define CC_CONF_INLINE inline
 #endif 
 
-/* Include the project config.
- * PROJECT_CONF_H might be defined in the project Makefile */
-#ifdef PROJECT_CONF_H
-#include PROJECT_CONF_H
-#endif /* PROJECT_CONF_H */
 
 #endif /* __CONTIKI_CONF_H__ */
