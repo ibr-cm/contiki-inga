@@ -175,7 +175,9 @@
 
 #else /* UIP_CONF_IPV6 */
 /* ip4 should build but is largely untested */
+#ifndef NETSTACK_CONF_NETWORK
 #define NETSTACK_CONF_NETWORK     rime_driver
+#endif
 
 #define LINKADDR_CONF_SIZE        2
 
