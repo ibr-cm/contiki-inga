@@ -3,6 +3,12 @@
 
 #include "../dev/i2c.h"
 
+/**
+ * \ingroup inga_sensors_driver
+ * \defgroup mag3110_interface MAG3110 Magnetometer Sensor
+ * @{
+ */
+
 /* Magnetometer device address*/
 #define MAG3110_ADDRESS		0x0E
 #define MAG3110_DEV_ADDR_W	MAG3110_ADDRESS << 1
@@ -216,5 +222,7 @@ void mag3110_write16bit(uint8_t addr, int16_t data);
  * @param data data to write
  */
 void mag3110_write8bit(uint8_t addr, uint8_t data);
+
+/** @} */
 
 #endif //MAG3110_H_
