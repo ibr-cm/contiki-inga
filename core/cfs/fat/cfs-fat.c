@@ -1035,31 +1035,33 @@ fat_read_write(int fd, const void *buf, unsigned int len, unsigned char write)
 cfs_offset_t
 cfs_seek(int fd, cfs_offset_t offset, int whence)
 {
-  if (fd < 0 || fd >= FAT_FD_POOL_SIZE) {
+  if(fd < 0 || fd >= FAT_FD_POOL_SIZE) {
     return -1;
   }
-  
-  switch (whence) {
+
+  switch(whence) {
     case CFS_SEEK_SET:
-      fat_fd_pool[fd].offset = offset;
       break;
     case CFS_SEEK_CUR:
-      fat_fd_pool[fd].offset += offset;
+      offset = fat_fd_pool[fd].offset + offset;
       break;
     case CFS_SEEK_END:
-      fat_fd_pool[fd].offset = (fat_file_pool[fd].dir_entry.DIR_FileSize - 1) + offset;
+      offset = fat_file_pool[fd].dir_entry.DIR_FileSize + offset;
       break;
     default:
-      break;
+    break;
   }
 
-  if (fat_fd_pool[fd].offset >= fat_file_pool[fd].dir_entry.DIR_FileSize) {
-    fat_fd_pool[fd].offset = (fat_file_pool[fd].dir_entry.DIR_FileSize - 1);
+  if(offset < 0) {
+    offset = 0;
   }
 
-  if (fat_fd_pool[fd].offset < 0) {
-    fat_fd_pool[fd].offset = 0;
+  if(offset > 0 && offset > fat_file_pool[fd].dir_entry.DIR_FileSize) {
+    offset = fat_file_pool[fd].dir_entry.DIR_FileSize;
   }
+
+  fat_fd_pool[fd].offset = offset;
+
 
   return fat_fd_pool[fd].offset;
 }
