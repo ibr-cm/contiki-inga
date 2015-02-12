@@ -46,6 +46,8 @@
  */
 
 #include "cfs-fat.h"
+#include "watchdog.h"
+
 
 #define DEBUG 0
 #if DEBUG
