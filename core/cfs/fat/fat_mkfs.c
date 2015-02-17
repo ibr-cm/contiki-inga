@@ -90,7 +90,7 @@ cfs_fat_mkfs(struct diskio_device_info *dev)
   } else {
     PRINTF("done.");
   }
-  
+
   PRINTF("\nWriting FATs ... ");
   mkfs_write_fats(buffer, dev, &fi);
 
@@ -221,9 +221,14 @@ mkfs_write_boot_sector(uint8_t *buffer, struct diskio_device_info *dev, struct F
   }
 
   // BS_jmpBoot
-  buffer[0x000] = 0x00;
-  buffer[0x001] = 0x00;
-  buffer[0x002] = 0x00;
+  buffer[0x000] = 0xEB;
+  if(fi->type == FAT16) {
+    buffer[0x001] = 0x3C;
+  }
+  else if(fi->type == FAT32) {
+    buffer[0x001] = 0x5a;
+  }
+  buffer[0x002] = 0x90;
 
   // BS_OEMName
   memcpy(&(buffer[0x03]), "cfs-mkfs", 8);
