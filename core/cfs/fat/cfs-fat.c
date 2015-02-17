@@ -569,29 +569,22 @@ pr_reset(struct PathResolver *rsolv)
 static uint8_t
 pr_get_next_path_part(struct PathResolver *rsolv)
 {
-  uint16_t i = 0;
-
-  if (rsolv->path == NULL) {
+  if(rsolv->path == NULL) {
     return 2;
   }
 
   rsolv->start = rsolv->end;
-  rsolv->end++;
-  if (rsolv->path[rsolv->start] == '/') {
+  if(rsolv->path[rsolv->start] == '/') {
     rsolv->start++;
   }
-
-  for (i = rsolv->start; rsolv->path[i] != '\0'; i++) {
-    if (rsolv->path[i] != '/') {
-      rsolv->end++;
-    }
-
-    if (rsolv->path[rsolv->end] == '/' || rsolv->path[rsolv->end] == '\0') {
-      return _make_valid_name(rsolv->path, rsolv->start, rsolv->end, rsolv->name);
-    }
+  if(rsolv->path[rsolv->start] == '\0') {
+      return 1;
   }
-
-  return 1;
+  rsolv->end = rsolv->start;
+  while(rsolv->path[rsolv->end] != '/' && rsolv->path[rsolv->end] != '\0') {
+    rsolv->end++;
+  }
+  return _make_valid_name(rsolv->path, rsolv->start, rsolv->end, rsolv->name);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t
