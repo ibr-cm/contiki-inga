@@ -883,7 +883,7 @@ cfs_open(const char *name, int flags)
 #endif /* !FAT_COOPERATIVE */
 
   /* Reset entry for overwriting */
-  if (flags & CFS_WRITE) {
+  if (flags & CFS_WRITE && !flags & CFS_READ) {
     cfs_remove(name);
   }
 
