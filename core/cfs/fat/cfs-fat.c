@@ -962,6 +962,9 @@ cfs_write(int fd, const void *buf, unsigned int len)
 static int
 fat_read_write(int fd, const void *buf, unsigned int len, unsigned char write)
 {
+  if(fd < 0 || fd >= FAT_FD_POOL_SIZE) {
+    return 0;
+  }
   /* offset within sector [bytes] */
   uint16_t offset = fat_fd_pool[fd].offset % (uint32_t) mounted.info.BPB_BytesPerSec;
   /* cluster offset */
@@ -974,7 +977,7 @@ fat_read_write(int fd, const void *buf, unsigned int len, unsigned char write)
   /* For read acces, check file length. */
   if (write == 0) {
     uint32_t size_left = fat_file_pool[fd].dir_entry.DIR_FileSize - fat_fd_pool[fd].offset;
-    
+
     /* limit len to remaining file length */
     if (size_left < len) {
       len = size_left;
@@ -1010,7 +1013,7 @@ fat_read_write(int fd, const void *buf, unsigned int len, unsigned char write)
     if (write) {
       sector_buffer_dirty = 1;
     }
-    
+
     offset = 0;
     clus_offset = (clus_offset + 1) % mounted.info.BPB_SecPerClus;
     if (clus_offset == 0) {
