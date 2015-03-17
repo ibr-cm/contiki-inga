@@ -1,5 +1,5 @@
 #include "contiki.h"
-#include "net/rime.h"
+#include "net/rime/rime.h"
 
 #include <util/delay.h>
 #include <stdio.h>
@@ -40,7 +40,7 @@ PROCESS(rime_unicast_sender, "Example unicast");
 AUTOSTART_PROCESSES(&rime_unicast_sender);
 /*---------------------------------------------------------------------------*/
 static void
-recv_uc(struct unicast_conn *c, const rimeaddr_t *from)
+recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 {
   char *datapntr;
   datapntr = packetbuf_dataptr();
@@ -102,7 +102,7 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 
   unicast_open(&uc, 146, &unicast_callbacks); // Channel
   static struct etimer et;
-  static rimeaddr_t addr;
+  static linkaddr_t addr;
 
   etimer_set(&et, 2*CLOCK_SECOND);
   PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
