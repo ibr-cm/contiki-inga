@@ -9,6 +9,8 @@
 #include "test.h"
 #include "test-params.h"
 
+#define CANDIDATE_LINK_ADDR 0x0002
+
 static char buff_[30];
 
 TEST_SUITE("net_test_sender");
@@ -26,10 +28,15 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
   printf("unicast message received from %x.%x: '%s'\n", from->u8[0], from->u8[1], (char *) packetbuf_dataptr());
   sprintf(buff_, NET_TEST_CFG_REQUEST_MSG, rec_count);
   printf("packet: %s\n buff: %s\n",(char *) packetbuf_dataptr(), buff_);
+
   if(strcmp((char *) packetbuf_dataptr(), buff_) == 0){
 	  static linkaddr_t addr;
-    addr.u8[0] = 0 >> 8;
-	  addr.u8[1] = 2 & 0xFF;
+
+		/*addr.u8[0] = 2 & 0xFF;*/
+		/*addr.u8[1] = 0 >> 8;*/
+
+    addr.u16 = UIP_HTONS(CANDIDATE_LINK_ADDR);
+
 	  static int8_t idx = 0;
 	  char buff_[30] = {'\0'};
 	  sprintf(buff_, NET_TEST_CFG_REQUEST_MSG, rec_count);
@@ -56,6 +63,7 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 
 
   unicast_open(&uc, 146, &unicast_callbacks); // channel = 145
+
   while(1){
 	PROCESS_YIELD();
   }
