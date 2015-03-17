@@ -32,10 +32,8 @@
 
 static struct unicast_conn uc;
 static char buff_[30];
-static uint8_t radio_done=0;
+static uint8_t radio_done = 0;
 static uint8_t rec_count = 0;
-
-
 
 TEST_SUITE("net_test_receiver");
 /*---------------------------------------------------------------------------*/
@@ -53,12 +51,12 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
 
   sprintf(buff_, NET_TEST_CFG_REQUEST_MSG, rec_count);
   printf("packet: %s\n buff: %s\n",(char *) packetbuf_dataptr(), buff_);
-  if(strcmp((char *) datapntr, buff_)== 0){
+  if(strcmp((char *) datapntr, buff_) == 0){
 	  rec_count++;
   }
 
   if (rec_count == 2) {
-  	radio_done=1;
+  	radio_done = 1;
   }
 }
 
@@ -116,14 +114,14 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 
   static int8_t idx = 0;
   char buff_[30] = {'\0'};
-  static uint8_t test_num =0;
+  static uint8_t test_num = 0;
 //  TEST_REPORT("NODE_ID", (uint16_t)settings_get_uint16(SETTINGS_KEY_PAN_ADDR, 0), 1, "");
   printf("TEST:RESULT:NODE_ID:0x%04x\n",(uint16_t)settings_get_uint16(SETTINGS_KEY_PAN_ADDR, 0));
   while (1) {
     etimer_set(&et, CLOCK_SECOND/4);
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-	if(test_num==0){
+	if(test_num == 0){
 		//Radio
 		if(!radio_done && idx < 15){
 			sprintf(buff_, NET_TEST_CFG_REQUEST_MSG, rec_count);
@@ -138,30 +136,29 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 			TEST_ASSERT(err_buf,radio_done);
 			TESTS_PRINT_RESULT("Radio");
 		}
-	}else if(test_num==1){
+	}else if(test_num == 1){
 		//Accelerometer
-		uint8_t test_res =acc_sensor.status(SENSORS_READY) && !acc_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(acc_sensor) && acc_sensor.status(SENSORS_ACTIVE);
+		uint8_t test_res = acc_sensor.status(SENSORS_READY) && !acc_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(acc_sensor) && acc_sensor.status(SENSORS_ACTIVE);
 		TEST_ASSERT("Accelerometer failed to init (may not mounted?)",test_res);
-		
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_0HZ10) && assert_acc_value());
 		TEST_ASSERT("Accelerometer value failed for 1/10HZ",test_res);
-		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_6HZ25) && assert_acc_value()); 
+		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_6HZ25) && assert_acc_value());
 		TEST_ASSERT("Accelerometer value failed for 6/25HZ",test_res);
-		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_25HZ) && assert_acc_value()); 
+		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_25HZ) && assert_acc_value());
 		TEST_ASSERT("Accelerometer value failed for 25HZ",test_res);
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_100HZ) && assert_acc_value());
 		TEST_ASSERT("Accelerometer value failed for 100HZ",test_res);
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_400HZ) && assert_acc_value());
 		TEST_ASSERT("Accelerometer value failed for 400HZ",test_res);
-		
+
 		test_res = SENSORS_DEACTIVATE(acc_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ acc_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Accelerometer failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Accelerometer");
 		test_num++;
 
-
-	}else if (test_num==2){
-		uint8_t test_res =battery_sensor.status(SENSORS_READY) && !battery_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(battery_sensor) && battery_sensor.status(SENSORS_ACTIVE);
+	}else if (test_num == 2){
+    // Battery sensor
+		uint8_t test_res = battery_sensor.status(SENSORS_READY) && !battery_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(battery_sensor) && battery_sensor.status(SENSORS_ACTIVE);
 		TEST_ASSERT("Battery-sensor failed to init",test_res);
 
 		int v = battery_sensor.value(BATTERY_VOLTAGE);
@@ -175,7 +172,7 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TESTS_PRINT_RESULT("Battery-sensor");
 		test_num++;
 
-	}else if(test_num==3){
+	}else if(test_num == 3){
 		uint8_t test_res = gyro_sensor.status(SENSORS_READY) && !gyro_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(gyro_sensor) && gyro_sensor.status(SENSORS_ACTIVE);
 		TEST_ASSERT("Gyro sensor failed to init",test_res);
 
@@ -186,7 +183,7 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TESTS_PRINT_RESULT("Gyro");
 		test_num++;
 
-	}else if(test_num==4){
+	}else if(test_num == 4){
 		uint8_t test_res = pressure_sensor.status(SENSORS_READY) && !pressure_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(pressure_sensor) && pressure_sensor.status(SENSORS_ACTIVE);
 		TEST_ASSERT("Pressure sensor failed to init",test_res);
 
@@ -196,8 +193,9 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TEST_ASSERT("Pressure failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Pressure-sensor");
 		test_num++;
-	//TODO Flash testen
-	}else if(test_num==5){
+
+	}else if(test_num == 5){
+    //TODO Flash testen
 		uint8_t test_res = !at45db_init();
 		TEST_ASSERT("Flash failed to init",test_res);
 		uint8_t buffer[512];
@@ -208,11 +206,11 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		at45db_write_page(0,0,buffer,512);
 		memset(buffer,2,512);
 		at45db_read_page_bypassed(0,0,buffer,512);
-		uint16_t i=0;
+		uint16_t i = 0;
 		for (;i<512;i++){
-			if (buffer[i]!=1){
+			if (buffer[i] != 1){
 				TEST_ASSERT("Flash failed to read or write",0);
-				break;		
+				break;
 			}
 		}
 		at45db_erase_page(0);
@@ -220,7 +218,7 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TESTS_PRINT_RESULT("Flash");
 		test_num++;
     //TODO mag test
-	}else if(test_num==6){
+	}else if(test_num == 6){
 		uint8_t test_res = mag_sensor.status(SENSORS_READY) && !mag_sensor.status(SENSORS_ACTIVE) && SENSORS_ACTIVATE(mag_sensor) && mag_sensor.status(SENSORS_ACTIVE);
 		TEST_ASSERT("Mag sensor failed to init",test_res);
 
