@@ -146,6 +146,7 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		test_res = (acc_sensor.configure(ACC_CONF_DATA_RATE, ACC_400HZ) && assert_acc_value());
 		TEST_ASSERT("Accelerometer value failed for 400HZ",test_res);
 
+		//TODO: enable acc_sensor status check. Needs implementation in driver
 		test_res = SENSORS_DEACTIVATE(acc_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ acc_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Accelerometer failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Accelerometer");
@@ -162,7 +163,8 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		test_res = v <= BATTERY_TEST_CFG_MAX_V && v >= BATTERY_TEST_CFG_MIN_V && i <= BATTERY_TEST_CFG_MAX_I && i >= BATTERY_TEST_CFG_MIN_I;
 		TEST_ASSERT("Battery-sensor value failed",test_res);
 
-		test_res = SENSORS_DEACTIVATE(battery_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ battery_sensor.status(SENSORS_READY);
+    //TODO: enable battery_sensor status check. Needs implementation in driver
+		test_res = SENSORS_DEACTIVATE(battery_sensor) && /*!battery_sensor.status(SENSORS_ACTIVE) &&*/ battery_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Battery-sensor failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Battery-sensor");
 		test_num++;
@@ -172,8 +174,8 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TEST_ASSERT("Gyro sensor failed to init",test_res);
 
 		//TODO: test values
-
-		test_res = SENSORS_DEACTIVATE(gyro_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ gyro_sensor.status(SENSORS_READY);
+    //TODO: enable gyro_sensor status check. Needs implementation in driver
+		test_res = SENSORS_DEACTIVATE(gyro_sensor) && /*!gyro_sensor.status(SENSORS_ACTIVE) &&*/ gyro_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Gyro failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Gyro");
 		test_num++;
@@ -183,8 +185,8 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TEST_ASSERT("Pressure sensor failed to init",test_res);
 
 		//TODO: test values
-
-		test_res = SENSORS_DEACTIVATE(pressure_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ pressure_sensor.status(SENSORS_READY);
+    //TODO: enable pressure_sensor status check. Needs implementation in driver
+		test_res = SENSORS_DEACTIVATE(pressure_sensor) && /*!pressure_sensor.status(SENSORS_ACTIVE) &&*/ pressure_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Pressure failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Pressure-sensor");
 		test_num++;
@@ -218,8 +220,8 @@ PROCESS_THREAD(rime_unicast_sender, ev, data)
 		TEST_ASSERT("Mag sensor failed to init",test_res);
 
 		//TODO: test values
-
-		test_res = SENSORS_DEACTIVATE(mag_sensor) && /*!acc_sensor.status(SENSORS_ACTIVE) &&*/ mag_sensor.status(SENSORS_READY);
+    //TODO: enable mag_sensor status check. Needs implementation in driver
+		test_res = SENSORS_DEACTIVATE(mag_sensor) && /*!mag_sensor.status(SENSORS_ACTIVE) &&*/ mag_sensor.status(SENSORS_READY);
 		TEST_ASSERT("Mag failed deactivate",test_res);
 		TESTS_PRINT_RESULT("Mag");
 		test_num++;
