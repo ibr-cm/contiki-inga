@@ -32,9 +32,6 @@ recv_uc(struct unicast_conn *c, const linkaddr_t *from)
   if(strcmp((char *) packetbuf_dataptr(), buff_) == 0){
     static linkaddr_t addr;
 
-    /*addr.u8[0] = 2 & 0xFF;*/
-    /*addr.u8[1] = 0 >> 8;*/
-
     addr.u16 = UIP_HTONS(CANDIDATE_LINK_ADDR);
 
     static int8_t idx = 0;
