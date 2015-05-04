@@ -131,6 +131,9 @@ static void report_fail(int a, int b, char *msg) {
 #define TESTS_DONE() \
   if (suite.errors == 0 && suite.overall_errors == 0) {  \
     TEST_PASS();  \
+  }\
+  if (suite.errors != 0 || suite.overall_errors != 0) {  \
+    TEST_FAIL(suite.test_name); \
   }
 
 /** Runs test if previous finished without failure. */

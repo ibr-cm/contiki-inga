@@ -3,14 +3,14 @@ tests:
   - name: inga-hardware-tests 
     timeout: 120
     devices:
-      - name: receiver
+      - name: candidate
         programdir: inga-hardware-tests
         program: hardware_tests_candidate
         instrument: []
         debug: []
         cflags: "-fno-inline -DNODE_CONF_ID=0x02 "
         graph_options: ""
-      - name: sender
+      - name: reference
         programdir: inga-hardware-tests
         program: hardware_tests_reference
         instrument: []

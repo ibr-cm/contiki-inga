@@ -1,13 +1,9 @@
 PROJECT_SOURCEFILES += sensor-tests.c
-# RIME unicast test
-hardware_tests_candidate: hardware_tests_candidate 
-	
-hardware_tests_reference: hardware_tests_reference 
-	
 
-# RIME broadcast test
-
+all : hardware_tests_candidate hardware_tests_reference 
 TARGET=inga
 
+
 CONTIKI = ../
+CONTIKI_WITH_RIME = 1
 include $(CONTIKI)/Makefile.include
